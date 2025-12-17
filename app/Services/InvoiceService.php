@@ -42,6 +42,33 @@ class InvoiceService
     {
         $data = static::getInvoiceData($billing);
 
+        // Prepare simple variables to avoid complex expressions inside heredoc interpolation
+        $kost = $data['kost'];
+        $kostName = $kost->nama_kost ?? 'KOST';
+        $kostAlamat = $kost->alamat ?? '';
+        $kostTelp = $kost->telepon ?? '-';
+
+        $consumer = $data['consumer'];
+        $consumerNama = $consumer->nama ?? '-';
+        $consumerHp = $consumer->no_hp ?? '-';
+        $consumerEmail = $consumer->email ?? '-';
+
+        $room = $data['room'];
+        $roomNomor = $room->nomor_kamar ?? '-';
+        $roomJenis = $room->jenis_kamar ?? '-';
+
+        $periodStart = $data['billing']->periode_awal->format('Y-m-d');
+        $periodEnd = $data['billing']->periode_akhir->format('Y-m-d');
+        $invoiceNumber = $billing->invoice_number;
+        $invoiceDate = $data['invoiceDate'];
+        $details = $data['details'];
+        $totalTagihan = number_format($data['totalTagihan'], 0, ',', '.');
+        $totalPaid = number_format($data['totalPaid'], 0, ',', '.');
+        $balance = number_format($data['balance'], 0, ',', '.');
+        $status = $data['status'];
+        $statusUpper = strtoupper($status);
+        $printedAt = now()->format('Y-m-d H:i:s');
+
         $html = <<<HTML
 <!DOCTYPE html>
 <html>
@@ -197,14 +224,14 @@ class InvoiceService
         <!-- Header -->
         <div class="header">
             <div class="company-info">
-                <h1>{$data['kost']->nama_kost ?? 'KOST'}</h1>
-                <p>{$data['kost']->alamat ?? ''}</p>
-                <p>Telp: {$data['kost']->telepon ?? '-'}</p>
+                <h1>{$kostName}</h1>
+                <p>{$kostAlamat}</p>
+                <p>Telp: {$kostTelp}</p>
             </div>
             <div class="invoice-meta">
                 <p>INVOICE</p>
-                <p style="font-size: 14px; color: #c62828;">{$billing->invoice_number}</p>
-                <p>Tanggal: {$data['invoiceDate']}</p>
+                <p style="font-size: 14px; color: #c62828;">{$invoiceNumber}</p>
+                <p>Tanggal: {$invoiceDate}</p>
             </div>
         </div>
 
@@ -212,15 +239,15 @@ class InvoiceService
         <div class="invoice-info">
             <div class="invoice-info-box">
                 <h3>PENYEWA</h3>
-                <p><strong>{$data['consumer']->nama ?? '-'}</strong></p>
-                <p>No. HP: {$data['consumer']->no_hp ?? '-'}</p>
-                <p>Email: {$data['consumer']->email ?? '-'}</p>
+                <p><strong>{$consumerNama}</strong></p>
+                <p>No. HP: {$consumerHp}</p>
+                <p>Email: {$consumerEmail}</p>
             </div>
             <div class="invoice-info-box">
                 <h3>KAMAR</h3>
-                <p><strong>Nomor Kamar: {$data['room']->nomor_kamar ?? '-'}</strong></p>
-                <p>Jenis: {$data['room']->jenis_kamar ?? '-'}</p>
-                <p>Periode: {$data['billing']->periode_awal->format('Y-m-d')} s/d {$data['billing']->periode_akhir->format('Y-m-d')}</p>
+                <p><strong>Nomor Kamar: {$roomNomor}</strong></p>
+                <p>Jenis: {$roomJenis}</p>
+                <p>Periode: {$periodStart} s/d {$periodEnd}</p>
             </div>
         </div>
 
@@ -239,16 +266,14 @@ class InvoiceService
 HTML;
 
         $no = 1;
-        foreach ($data['details'] as $detail) {
-            $html .= <<<HTML
-                <tr>
-                    <td>{$no}</td>
-                    <td>{$detail->keterangan}</td>
-                    <td class="text-right">{$detail->qty}</td>
-                    <td class="text-right">Rp {number_format($detail->harga, 0, ',', '.')}</td>
-                    <td class="text-right">Rp {number_format($detail->subtotal, 0, ',', '.')}</td>
-                </tr>
-HTML;
+        foreach ($details as $detail) {
+            $html .= "                <tr>\n";
+            $html .= "                    <td>{$no}</td>\n";
+            $html .= "                    <td>{$detail->keterangan}</td>\n";
+            $html .= "                    <td class=\"text-right\">{$detail->qty}</td>\n";
+            $html .= "                    <td class=\"text-right\">Rp " . number_format($detail->harga, 0, ',', '.') . "</td>\n";
+            $html .= "                    <td class=\"text-right\">Rp " . number_format($detail->subtotal, 0, ',', '.') . "</td>\n";
+            $html .= "                </tr>\n";
             $no++;
         }
 
@@ -264,18 +289,18 @@ HTML;
                     <h3>RINGKASAN PEMBAYARAN</h3>
                     <div class="total-item">
                         <span>Total Tagihan:</span>
-                        <span>Rp {number_format($data['totalTagihan'], 0, ',', '.')}</span>
+                        <span>Rp {$totalTagihan}</span>
                     </div>
                     <div class="total-item">
                         <span>Total Dibayar:</span>
-                        <span>Rp {number_format($data['totalPaid'], 0, ',', '.')}</span>
+                        <span>Rp {$totalPaid}</span>
                     </div>
                     <div class="total-item total">
                         <span>Sisa Tagihan:</span>
-                        <span>Rp {number_format($data['balance'], 0, ',', '.')}</span>
+                        <span>Rp {$balance}</span>
                     </div>
                     <div style="margin-top: 10px;">
-                        <span class="status-badge status-{$data['status']}">{strtoupper($data['status'])}</span>
+                        <span class="status-badge status-{$status}">{$statusUpper}</span>
                     </div>
                 </div>
             </div>
@@ -284,7 +309,7 @@ HTML;
         <!-- Footer -->
         <div class="footer">
             <p>Terima kasih telah menjadi penyewa kami. Invoice ini sah sebagai bukti transaksi.</p>
-            <p>Dicetak pada: {now()->format('Y-m-d H:i:s')}</p>
+            <p>Dicetak pada: {$printedAt}</p>
         </div>
     </div>
 </body>
