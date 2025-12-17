@@ -9,28 +9,21 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-   public function up(): void
+    public function up(): void
     {
         Schema::create('kosts', function (Blueprint $table) {
             $table->id();
             $table->string('nama_kost');
-            $table->text('alamat');
-
-            $table->unsignedBigInteger('pemilik_id');
-            $table->foreign('pemilik_id')
-                ->references('id')
-                ->on('users')
-                ->onDelete('cascade');
-
-            $table->integer('harga')->nullable();
-            $table->integer('jumlah_kamar')->default(0);
-            $table->enum('status', ['tersedia', 'penuh'])->default('tersedia');
-
+            $table->text('alamat')->nullable();
+            $table->string('kota')->nullable();
+            $table->string('provinsi')->nullable();
+            $table->string('telepon')->nullable();
+            $table->string('email')->nullable();
+            $table->decimal('harga_dasar', 12, 0)->nullable()->comment('Base price for rooms');
+            $table->text('deskripsi')->nullable();
             $table->timestamps();
         });
     }
-
-
 
     /**
      * Reverse the migrations.

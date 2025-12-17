@@ -3,13 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\RoomAddon;
-use Illuminate\Http\Request;
+use App\Http\Requests\StoreRoomAddonRequest;
+use App\Http\Requests\UpdateRoomAddonRequest;
 
 class RoomAddonController extends Controller
 {
     public function index()
     {
-        $addons = RoomAddon::all();
+        $addons = RoomAddon::orderBy('nama_addon')->get();
         return view('addons.index', compact('addons'));
     }
 
@@ -18,10 +19,10 @@ class RoomAddonController extends Controller
         return view('addons.create');
     }
 
-    public function store(Request $request)
+    public function store(StoreRoomAddonRequest $request)
     {
-        RoomAddon::create($request->all());
-        return redirect()->back()->with('success','Addon berhasil ditambahkan');
+        RoomAddon::create($request->validated());
+        return redirect()->route('addons.index')->with('success', 'Addon berhasil ditambahkan');
     }
 
     public function edit(RoomAddon $addon)
@@ -29,15 +30,15 @@ class RoomAddonController extends Controller
         return view('addons.edit', compact('addon'));
     }
 
-    public function update(Request $request, RoomAddon $addon)
+    public function update(UpdateRoomAddonRequest $request, RoomAddon $addon)
     {
-        $addon->update($request->all());
-        return redirect()->back()->with('success','Addon berhasil diperbarui');
+        $addon->update($request->validated());
+        return redirect()->route('addons.index')->with('success', 'Addon berhasil diperbarui');
     }
 
     public function destroy(RoomAddon $addon)
     {
         $addon->delete();
-        return redirect()->back()->with('success','Addon berhasil dihapus');
+        return redirect()->route('addons.index')->with('success', 'Addon berhasil dihapus');
     }
 }

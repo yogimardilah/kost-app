@@ -14,7 +14,7 @@ return [
     |
     */
 
-    'title' => 'AdminLTE 3',
+    'title' => 'KOST APP',
     'title_prefix' => '',
     'title_postfix' => '',
 
@@ -63,12 +63,12 @@ return [
     |
     */
 
-    'logo' => '<b>Admin</b>LTE',
+    'logo' => '<b>Kost</b>App',
+    'logo_img_alt' => 'Manajemen Kost',
     'logo_img' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
     'logo_img_class' => 'brand-image img-circle elevation-3',
     'logo_img_xl' => null,
     'logo_img_xl_class' => 'brand-image-xs',
-    'logo_img_alt' => 'Admin Logo',
 
     /*
     |--------------------------------------------------------------------------
@@ -299,128 +299,67 @@ return [
     */
 
     'menu' => [
-         [
-        'text' => 'Dashboard',
-        'url'  => 'dashboard',
-        'icon' => 'fas fa-home',
-        ],
         [
-            'text' => 'Data Kost',
-            'url'  => 'kost',
-            'icon' => 'fas fa-building',
+            'text' => 'Dashboard',
+            'url'  => 'dashboard',
+            'icon' => 'fas fa-home',
         ],
+
+        // Master Data group
         [
-            'text' => 'Rooms',
-            'url'  => 'rooms',
-            'icon' => 'fas fa-door-closed',
+            'text'    => 'Master Data',
+            'icon'    => 'fas fa-database',
+            'submenu' => [
+                [ 'text' => 'Data Kost', 'url' => 'kost', 'icon' => 'fas fa-building' ],
+                [ 'text' => 'Kamar', 'url' => 'rooms', 'icon' => 'fas fa-door-closed' ],
+                [ 'text' => 'Room Addons', 'url' => 'addons', 'icon' => 'fas fa-puzzle-piece' ],
+                [ 'text' => 'Penyewa', 'url' => 'consumers', 'icon' => 'fas fa-users' ],
+            ],
         ],
+
+        // Transaksi group
         [
-            'text' => 'Room Addons',
-            'url'  => 'addons',
-            'icon' => 'fas fa-puzzle-piece',
+            'text'    => 'Transaksi',
+            'icon'    => 'fas fa-exchange-alt',
+            'submenu' => [
+                [ 'text' => 'Occupancies', 'url' => 'occupancies', 'icon' => 'fas fa-bed' ],
+                [ 'text' => 'Billings', 'url' => 'billings', 'icon' => 'fas fa-file-invoice' ],
+                [ 'text' => 'Payments', 'url' => 'payments', 'icon' => 'fas fa-credit-card' ],
+            ],
         ],
+
+        // Laporan group
         [
-            'text' => 'Penyewa',
-            'url'  => 'consumers',
-            'icon' => 'fas fa-users',
+            'text'    => 'Laporan',
+            'icon'    => 'fas fa-chart-line',
+            'submenu' => [
+                [ 'text' => 'Laporan Hunian', 'url' => 'reports/occupancy', 'icon' => 'fas fa-bed' ],
+                [ 'text' => 'Laporan Keuangan', 'url' => 'reports/finance', 'icon' => 'fas fa-money-bill-wave' ],
+            ],
         ],
+
+        // Manajemen group
         [
-            'text' => 'Occupancies',
-            'url'  => 'occupancies',
-            'icon' => 'fas fa-bed',
+            'text'    => 'Manajemen',
+            'icon'    => 'fas fa-user-cog',
+            'submenu' => [
+                [ 'text' => 'Users', 'url' => 'users', 'icon' => 'fas fa-users-cog' ],
+                [ 'text' => 'Roles', 'url' => 'roles', 'icon' => 'fas fa-user-shield' ],
+            ],
         ],
+
+        // Settings
+        [
+            'text' => 'Settings',
+            'url'  => 'settings',
+            'icon' => 'fas fa-cog',
+        ],
+
         // Navbar items:
         [
             'type' => 'navbar-search',
             'text' => 'search',
             'topnav_right' => true,
-        ],
-        [
-            'type' => 'fullscreen-widget',
-            'topnav_right' => true,
-        ],
-
-        // Sidebar items:
-        [
-            'type' => 'sidebar-menu-search',
-            'text' => 'search',
-        ],
-        [
-            'text' => 'blog',
-            'url' => 'admin/blog',
-            'can' => 'manage-blog',
-        ],
-        [
-            'text' => 'pages',
-            'url' => 'admin/pages',
-            'icon' => 'far fa-fw fa-file',
-            'label' => 4,
-            'label_color' => 'success',
-        ],
-        ['header' => 'account_settings'],
-        [
-            'text' => 'profile',
-            'url' => 'admin/settings',
-            'icon' => 'fas fa-fw fa-user',
-        ],
-        [
-            'text' => 'change_password',
-            'url' => 'admin/settings',
-            'icon' => 'fas fa-fw fa-lock',
-        ],
-        [
-            'text' => 'multilevel',
-            'icon' => 'fas fa-fw fa-share',
-            'submenu' => [
-                [
-                    'text' => 'level_one',
-                    'url' => '#',
-                ],
-                [
-                    'text' => 'level_one',
-                    'url' => '#',
-                    'submenu' => [
-                        [
-                            'text' => 'level_two',
-                            'url' => '#',
-                        ],
-                        [
-                            'text' => 'level_two',
-                            'url' => '#',
-                            'submenu' => [
-                                [
-                                    'text' => 'level_three',
-                                    'url' => '#',
-                                ],
-                                [
-                                    'text' => 'level_three',
-                                    'url' => '#',
-                                ],
-                            ],
-                        ],
-                    ],
-                ],
-                [
-                    'text' => 'level_one',
-                    'url' => '#',
-                ],
-            ],
-        ],
-        ['header' => 'labels'],
-        [
-            'text' => 'important',
-            'icon_color' => 'red',
-            'url' => '#',
-        ],
-        [
-            'text' => 'warning',
-            'icon_color' => 'yellow',
-            'url' => '#',
-        ],
-        [
-            'text' => 'information',
-            'icon_color' => 'cyan',
-            'url' => '#',
         ],
     ],
 

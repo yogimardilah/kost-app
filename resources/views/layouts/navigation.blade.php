@@ -10,11 +10,90 @@
                     </a>
                 </div>
 
-                <!-- Navigation Links -->
-                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                <!-- Navigation Links (Grouped) -->
+                <div class="hidden space-x-4 sm:-my-px sm:ms-10 sm:flex items-center">
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+
+                    <!-- Master Data -->
+                    <x-dropdown align="left" width="48">
+                        <x-slot name="trigger">
+                            <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
+                                <div>{{ __('Master Data') }}</div>
+                                <div class="ms-1">
+                                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                            </button>
+                        </x-slot>
+
+                        <x-slot name="content">
+                            <x-dropdown-link :href="route('kost.index')">{{ __('Data Kost') }}</x-dropdown-link>
+                            <x-dropdown-link :href="route('rooms.index')">{{ __('Kamar') }}</x-dropdown-link>
+                            <x-dropdown-link :href="route('addons.index')">{{ __('Room Addons') }}</x-dropdown-link>
+                            <x-dropdown-link :href="route('consumers.index')">{{ __('Penyewa') }}</x-dropdown-link>
+                        </x-slot>
+                    </x-dropdown>
+
+                    <!-- Transaksi -->
+                    <x-dropdown align="left" width="48">
+                        <x-slot name="trigger">
+                            <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
+                                <div>{{ __('Transaksi') }}</div>
+                                <div class="ms-1">
+                                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                            </button>
+                        </x-slot>
+
+                        <x-slot name="content">
+                            <x-dropdown-link :href="route('occupancies.index')">{{ __('Occupancies') }}</x-dropdown-link>
+                            <x-dropdown-link :href="route('billings.index')">{{ __('Billings') }}</x-dropdown-link>
+                            <x-dropdown-link :href="route('payments.index')">{{ __('Payments') }}</x-dropdown-link>
+                        </x-slot>
+                    </x-dropdown>
+
+                    <!-- Laporan -->
+                    <x-dropdown align="left" width="48">
+                        <x-slot name="trigger">
+                            <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
+                                <div>{{ __('Laporan') }}</div>
+                                <div class="ms-1">
+                                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                            </button>
+                        </x-slot>
+
+                        <x-slot name="content">
+                            <x-dropdown-link :href="route('reports.occupancy')">{{ __('Laporan Hunian') }}</x-dropdown-link>
+                            <x-dropdown-link :href="route('reports.finance')">{{ __('Laporan Keuangan') }}</x-dropdown-link>
+                        </x-slot>
+                    </x-dropdown>
+
+                    <!-- Manajemen -->
+                    <x-dropdown align="left" width="36">
+                        <x-slot name="trigger">
+                            <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
+                                <div>{{ __('Manajemen') }}</div>
+                                <div class="ms-1">
+                                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                            </button>
+                        </x-slot>
+
+                        <x-slot name="content">
+                            <x-dropdown-link :href="route('users.index')">{{ __('Users') }}</x-dropdown-link>
+                            <x-dropdown-link :href="route('roles.index')">{{ __('Roles') }}</x-dropdown-link>
+                        </x-slot>
+                    </x-dropdown>
                 </div>
             </div>
 
@@ -70,6 +149,33 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+
+            <div class="mt-2 border-t border-gray-200 dark:border-gray-700 pt-2">
+                <div class="px-3 text-xs font-semibold text-gray-500 dark:text-gray-300">{{ __('Master Data') }}</div>
+                <x-responsive-nav-link :href="route('kost.index')" :active="request()->routeIs('kost.*')">{{ __('Data Kost') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('rooms.index')" :active="request()->routeIs('rooms.*')">{{ __('Kamar') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('addons.index')" :active="request()->routeIs('addons.*')">{{ __('Room Addons') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('consumers.index')" :active="request()->routeIs('consumers.*')">{{ __('Penyewa') }}</x-responsive-nav-link>
+            </div>
+
+            <div class="mt-2 border-t border-gray-200 dark:border-gray-700 pt-2">
+                <div class="px-3 text-xs font-semibold text-gray-500 dark:text-gray-300">{{ __('Transaksi') }}</div>
+                <x-responsive-nav-link :href="route('occupancies.index')" :active="request()->routeIs('occupancies.*')">{{ __('Occupancies') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('billings.index')" :active="request()->routeIs('billings.*')">{{ __('Billings') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('payments.index')" :active="request()->routeIs('payments.*')">{{ __('Payments') }}</x-responsive-nav-link>
+            </div>
+
+            <div class="mt-2 border-t border-gray-200 dark:border-gray-700 pt-2">
+                <div class="px-3 text-xs font-semibold text-gray-500 dark:text-gray-300">{{ __('Laporan') }}</div>
+                <x-responsive-nav-link :href="route('reports.occupancy')">{{ __('Laporan Hunian') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('reports.finance')">{{ __('Laporan Keuangan') }}</x-responsive-nav-link>
+            </div>
+
+            <div class="mt-2 border-t border-gray-200 dark:border-gray-700 pt-2">
+                <div class="px-3 text-xs font-semibold text-gray-500 dark:text-gray-300">{{ __('Manajemen') }}</div>
+                <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">{{ __('Users') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('roles.index')" :active="request()->routeIs('roles.*')">{{ __('Roles') }}</x-responsive-nav-link>
+            </div>
         </div>
 
         <!-- Responsive Settings Options -->

@@ -11,13 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('rooms', function (Blueprint $table) {
+        Schema::create('room_addons', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('kost_id')->constrained('kosts');
-            $table->string('kode_kamar');
-            $table->string('tipe_kamar');
-            $table->decimal('harga_bulanan', 12, 2);
-            $table->string('status_kamar', 20);
+            $table->string('nama_addon');
+            $table->decimal('harga', 12, 2);
+            $table->string('satuan');
             $table->timestamps();
         });
     }
@@ -28,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('rooms');
+        Schema::dropIfExists('room_addons');
     }
 };

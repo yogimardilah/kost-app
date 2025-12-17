@@ -11,11 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('room_addons', function (Blueprint $table) {
+        Schema::create('room_addon_maps', function (Blueprint $table) {
             $table->id();
-            $table->string('nama_addon');
-            $table->decimal('harga', 12, 2);
-            $table->string('satuan');
+            $table->foreignId('room_id')->constrained('rooms')->cascadeOnDelete();
+            $table->foreignId('addon_id')->constrained('room_addons')->cascadeOnDelete();
             $table->timestamps();
         });
     }

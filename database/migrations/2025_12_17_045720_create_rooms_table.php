@@ -11,10 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('room_addon_maps', function (Blueprint $table) {
+        Schema::create('rooms', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('room_id')->constrained('rooms')->cascadeOnDelete();
-            $table->foreignId('addon_id')->constrained('room_addons')->cascadeOnDelete();
+            $table->foreignId('kost_id')->constrained('kosts')->cascadeOnDelete();
+            $table->string('nomor_kamar')->unique();
+            $table->string('jenis_kamar');
+            $table->decimal('harga', 12, 0);
+            $table->string('status', 20)->default('tersedia');
             $table->timestamps();
         });
     }
@@ -25,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('room_addons');
+        Schema::dropIfExists('rooms');
     }
 };

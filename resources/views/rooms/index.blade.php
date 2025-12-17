@@ -1,5 +1,64 @@
 @extends('layouts.app')
 
+@section('title', 'Daftar Kamar')
+
+@section('content_header')
+    <h1>Daftar Kamar</h1>
+@endsection
+
+@section('content')
+    <div class="mb-3">
+        <a href="{{ route('rooms.create') }}" class="btn btn-primary">Tambah Kamar</a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Nomor</th>
+                        <th>Jenis</th>
+                        <th>Harga</th>
+                        <th>Status</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($rooms as $room)
+                        <tr>
+                            <td>{{ $loop->iteration }}</td>
+                            <td>{{ $room->nomor_kamar }}</td>
+                            <td>{{ $room->jenis_kamar }}</td>
+                            <td>{{ number_format($room->harga,0,',','.') }}</td>
+                            <td>
+                                @if($room->status === 'tersedia')
+                                    <span class="badge bg-success">Tersedia</span>
+                                @else
+                                    <span class="badge bg-danger">Terisi</span>
+                                @endif
+                            </td>
+                            <td>
+                                <a href="{{ route('rooms.edit', $room) }}" class="btn btn-sm btn-warning">Edit</a>
+                                <form action="{{ route('rooms.destroy', $room) }}" method="POST" style="display:inline-block">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="btn btn-sm btn-danger" onclick="return confirm('Hapus kamar?')">Hapus</button>
+                                </form>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6">Belum ada kamar.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+@endsection
+@extends('layouts.app')
+
 @section('content')
 <div class="container">
     <h2>Kamar Kost</h2>

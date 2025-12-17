@@ -11,9 +11,18 @@ class Kost extends Model
     protected $fillable = [
         'nama_kost',
         'alamat',
-        'pemilik_id',
-        'harga',
-        'jumlah_kamar',
-        'status',
+        'kota',
+        'provinsi',
+        'telepon',
+        'email',
+        'deskripsi',
     ];
+
+    /**
+     * Rooms that belong to this kost.
+     */
+    public function rooms()
+    {
+        return $this->hasMany(Room::class);
+    }
 }

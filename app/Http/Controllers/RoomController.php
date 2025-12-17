@@ -5,35 +5,47 @@ namespace App\Http\Controllers;
 use App\Models\Room;
 use App\Models\Kost;
 use Illuminate\Http\Request;
+use App\Http\Requests\StoreRoomRequest;
+use App\Http\Requests\UpdateRoomRequest;
 
 class RoomController extends Controller
 {
-    public function index($kostId)
+    public function index(Request $request, $kostId = null)
     {
-        $rooms = Room::where('kost_id', $kostId)->with('addons','occupancies')->get();
+        $query = Room::with('addons', 'occupancies');
+
+        if ($kostId) {
+            $query->where('kost_id', $kostId);
+        } elseif ($request->filled('kost_id')) {
+            $query->where('kost_id', $request->get('kost_id'));
+        }
+
+        $rooms = $query->get();
         return view('rooms.index', compact('rooms','kostId'));
     }
 
-    public function create($kostId)
+    public function create($kostId = null)
     {
-        return view('rooms.create', compact('kostId'));
+        $kosts = Kost::orderBy('nama_kost')->get();
+        return view('rooms.create', compact('kosts', 'kostId'));
     }
 
-    public function store(Request $request)
+    public function store(StoreRoomRequest $request)
     {
-        Room::create($request->all());
-        return redirect()->back()->with('success','Kamar berhasil ditambahkan');
+        Room::create($request->validated());
+        return redirect()->route('rooms.index')->with('success','Kamar berhasil ditambahkan');
     }
 
     public function edit(Room $room)
     {
-        return view('rooms.edit', compact('room'));
+        $kosts = Kost::orderBy('nama_kost')->get();
+        return view('rooms.edit', compact('room', 'kosts'));
     }
 
-    public function update(Request $request, Room $room)
+    public function update(UpdateRoomRequest $request, Room $room)
     {
-        $room->update($request->all());
-        return redirect()->back()->with('success','Kamar berhasil diperbarui');
+        $room->update($request->validated());
+        return redirect()->route('rooms.index')->with('success','Kamar berhasil diperbarui');
     }
 
     public function destroy(Room $room)

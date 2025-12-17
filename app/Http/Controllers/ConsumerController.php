@@ -3,13 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Consumer;
-use Illuminate\Http\Request;
+use App\Http\Requests\StoreConsumerRequest;
+use App\Http\Requests\UpdateConsumerRequest;
 
 class ConsumerController extends Controller
 {
     public function index()
     {
-        $consumers = Consumer::all();
+        $consumers = Consumer::orderBy('id', 'desc')->get();
         return view('consumers.index', compact('consumers'));
     }
 
@@ -18,10 +19,10 @@ class ConsumerController extends Controller
         return view('consumers.create');
     }
 
-    public function store(Request $request)
+    public function store(StoreConsumerRequest $request)
     {
-        Consumer::create($request->all());
-        return redirect()->back()->with('success','Penyewa berhasil ditambahkan');
+        Consumer::create($request->validated());
+        return redirect()->route('consumers.index')->with('success', 'Penyewa berhasil ditambahkan');
     }
 
     public function edit(Consumer $consumer)
@@ -29,15 +30,15 @@ class ConsumerController extends Controller
         return view('consumers.edit', compact('consumer'));
     }
 
-    public function update(Request $request, Consumer $consumer)
+    public function update(UpdateConsumerRequest $request, Consumer $consumer)
     {
-        $consumer->update($request->all());
-        return redirect()->back()->with('success','Penyewa berhasil diperbarui');
+        $consumer->update($request->validated());
+        return redirect()->route('consumers.index')->with('success', 'Penyewa berhasil diperbarui');
     }
 
     public function destroy(Consumer $consumer)
     {
         $consumer->delete();
-        return redirect()->back()->with('success','Penyewa berhasil dihapus');
+        return redirect()->route('consumers.index')->with('success', 'Penyewa berhasil dihapus');
     }
 }

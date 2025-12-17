@@ -21,21 +21,24 @@ class KostController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nama_kost'    => 'required',
-            'alamat'       => 'required',
-            'harga'        => 'required|numeric',
-            'jumlah_kamar' => 'required|numeric',
-            'status'       => 'required',
+            'nama_kost' => 'required|string|max:255',
+            'alamat'    => 'required|string',
+            'kota'      => 'nullable|string|max:100',
+            'provinsi'  => 'nullable|string|max:100',
+            'telepon'   => 'nullable|string|max:20',
+            'email'     => 'nullable|email|max:255',
+            'deskripsi' => 'nullable|string',
         ]);
 
-          Kost::create([
-            'nama_kost'    => $request->nama_kost,
-            'alamat'       => $request->alamat,
-            'pemilik_id'   => auth()->id(), // 🔥 INI KUNCI
-            'harga'        => $request->harga,
-            'jumlah_kamar' => $request->jumlah_kamar,
-            'status'       => $request->status,
-        ]);
+        Kost::create($request->only([
+            'nama_kost',
+            'alamat',
+            'kota',
+            'provinsi',
+            'telepon',
+            'email',
+            'deskripsi',
+        ]));
 
         return redirect()->route('kost.index')
             ->with('success', 'Data kost berhasil ditambahkan');
@@ -49,14 +52,24 @@ class KostController extends Controller
     public function update(Request $request, Kost $kost)
     {
         $request->validate([
-            'nama_kost'    => 'required',
-            'alamat'       => 'required',
-            'harga'        => 'required|numeric',
-            'jumlah_kamar' => 'required|numeric',
-            'status'       => 'required',
+            'nama_kost' => 'required|string|max:255',
+            'alamat'    => 'required|string',
+            'kota'      => 'nullable|string|max:100',
+            'provinsi'  => 'nullable|string|max:100',
+            'telepon'   => 'nullable|string|max:20',
+            'email'     => 'nullable|email|max:255',
+            'deskripsi' => 'nullable|string',
         ]);
 
-        $kost->update($request->all());
+        $kost->update($request->only([
+            'nama_kost',
+            'alamat',
+            'kota',
+            'provinsi',
+            'telepon',
+            'email',
+            'deskripsi',
+        ]));
 
         return redirect()->route('kost.index')
             ->with('success', 'Data kost berhasil diupdate');

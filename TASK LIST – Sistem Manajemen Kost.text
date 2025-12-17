@@ -1,0 +1,414 @@
+TASK LIST – Sistem Manajemen Kost
+Tech Stack
+
+
+Backend: Laravel
+
+
+Database: PostgreSQL
+
+
+Frontend: Blade / Vue (opsional)
+
+
+Auth: Laravel Auth / Sanctum
+
+
+Export: Excel (PhpSpreadsheet)
+
+
+Notifikasi: WhatsApp API (bulk)
+
+
+
+🔐 1. AUTH & ROLE MANAGEMENT
+1.1 Autentikasi User
+
+
+ Setup Laravel Auth (Login, Logout)
+
+
+ Middleware auth
+
+
+ Middleware role-based access
+
+
+1.2 Master Role Akses
+Role:
+
+
+Owner
+
+
+Admin
+
+
+Task:
+
+
+ Tabel roles
+
+
+ Tabel users
+
+
+ Relasi user ↔ role
+
+
+ CRUD Role
+
+
+ Assign role ke user
+
+
+ Middleware akses menu berdasarkan role
+
+
+
+👤 2. MASTER CONSUMER (PENGHUNI KOST)
+2.1 Database
+
+
+ Tabel consumers
+
+
+id
+
+
+nik
+
+
+nama
+
+
+no_hp
+
+
+alamat
+
+
+created_at
+
+
+
+
+ Tabel consumer_vehicles
+
+
+id
+
+
+consumer_id
+
+
+jenis_kendaraan
+
+
+nomor_polisi
+
+
+
+
+2.2 Backend
+
+
+ CRUD Consumer
+
+
+ CRUD Kendaraan Consumer
+
+
+ Validasi NIK unik
+
+
+2.3 Frontend
+
+
+ Form input consumer
+
+
+ List consumer
+
+
+ Detail consumer + kendaraan
+
+
+
+🏠 3. MASTER KAMAR
+3.1 Database
+
+
+ Tabel rooms
+
+
+id
+
+
+nomor_kamar
+
+
+jenis_kamar
+
+
+harga
+
+
+status (tersedia / terisi)
+
+
+
+
+3.2 Backend
+
+
+ CRUD kamar
+
+
+ Update status kamar otomatis saat billing
+
+
+3.3 Frontend
+
+
+ Form master kamar
+
+
+ List kamar
+
+
+ Indikator status kamar
+
+
+
+➕ 4. MASTER ADD ONS (JASA TAMBAHAN)
+4.1 Database
+
+
+ Tabel addons
+
+
+id
+
+
+nama_jasa
+
+
+harga
+
+
+satuan
+
+
+keterangan
+
+
+
+
+4.2 Backend
+
+
+ CRUD Add Ons
+
+
+ Relasi Add Ons ke Billing
+
+
+4.3 Frontend
+
+
+ Form Add Ons
+
+
+ List Add Ons
+
+
+
+📊 5. DASHBOARD
+5.1 Data Statistik
+
+
+ Pendapatan harian
+
+
+ Pendapatan bulanan
+
+
+ Status kamar (terisi / kosong)
+
+
+ Traffic in/out kamar per hari (range 1 bulan)
+
+
+5.2 Backend
+
+
+ Query agregasi PostgreSQL
+
+
+ API dashboard
+
+
+5.3 Frontend
+
+
+ Chart pendapatan (Chart.js)
+
+
+ Card status kamar
+
+
+ Grafik traffic
+
+
+
+💰 6. BILLING & TRANSAKSI
+6.1 Database
+
+
+ Tabel billings
+
+
+id
+
+
+consumer_id
+
+
+room_id
+
+
+total
+
+
+status
+
+
+due_date
+
+
+
+
+ Tabel billing_items
+
+
+billing_id
+
+
+addon_id
+
+
+harga
+
+
+qty
+
+
+
+
+ Tabel billing_payments
+
+
+billing_id
+
+
+metode
+
+
+bukti_foto
+
+
+tanggal_bayar
+
+
+
+
+6.2 Backend
+
+
+ Create billing
+
+
+ Upload bukti pembayaran
+
+
+ Generate invoice
+
+
+ History transaksi per kamar
+
+
+ Hitung total otomatis
+
+
+6.3 WhatsApp Integration
+
+
+ WhatsApp bulk kirim invoice
+
+
+ WhatsApp bulk reminder jatuh tempo
+
+
+ Log pengiriman WA
+
+
+6.4 Frontend
+
+
+ Form billing
+
+
+ Preview invoice
+
+
+ Download / print invoice
+
+
+
+📑 7. REPORT
+7.1 Backend
+
+
+ Filter report by tanggal
+
+
+ Query transaksi by range tanggal
+
+
+ Export Excel (PhpSpreadsheet)
+
+
+7.2 Frontend
+
+
+ Form filter report
+
+
+ Button export Excel
+
+
+
+📦 8. NON-FUNCTIONAL TASK
+8.1 Security
+
+
+ Validasi input
+
+
+ Role-based menu
+
+
+ CSRF protection
+
+
+8.2 Performance
+
+
+ Index PostgreSQL
+
+
+ Pagination data
+
+
+
