@@ -9,10 +9,31 @@
 @section('content')
 
 <div class="card">
-    <div class="card-header">
+    <div class="card-header d-flex justify-content-between align-items-center">
         <a href="{{ route('kost.create') }}" class="btn btn-primary btn-sm">
             <i class="fas fa-plus"></i> Tambah Kost
         </a>
+        <form method="GET" action="{{ route('kost.index') }}" class="form-inline">
+            <div class="input-group input-group-sm">
+                <input 
+                    type="text" 
+                    name="q" 
+                    class="form-control" 
+                    placeholder="Cari nama, alamat, atau kota..."
+                    value="{{ request('q') }}"
+                >
+                <div class="input-group-append">
+                    <button class="btn btn-outline-secondary" type="submit">
+                        <i class="fas fa-search"></i> Cari
+                    </button>
+                    @if(request('q'))
+                        <a href="{{ route('kost.index') }}" class="btn btn-outline-danger ml-2">
+                            <i class="fas fa-times"></i> Reset
+                        </a>
+                    @endif
+                </div>
+            </div>
+        </form>
     </div>
     <div class="card-body">
         @if(session('success'))
@@ -37,7 +58,7 @@
             <tbody>
                 @forelse($kosts as $no => $kost)
                     <tr>
-                        <td>{{ $no + 1 }}</td>
+                        <td>{{ ($kosts->currentPage() - 1) * $kosts->perPage() + $no + 1 }}</td>
                         <td><strong>{{ $kost->nama_kost }}</strong></td>
                         <td>{{ Str::limit($kost->alamat, 50) }}</td>
                         <td>{{ $kost->kota ?? '-' }}</td>
@@ -61,6 +82,16 @@
                 @endforelse
             </tbody>
         </table>
+
+        <!-- Pagination -->
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div>
+                Menampilkan {{ $kosts->firstItem() ?? 0 }} hingga {{ $kosts->lastItem() ?? 0 }} dari {{ $kosts->total() }} data
+            </div>
+            <div>
+                {{ $kosts->links() }}
+            </div>
+        </div>
     </div>
 </div>
 

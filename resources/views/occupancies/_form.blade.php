@@ -60,16 +60,6 @@
         @error('tanggal_keluar') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
     </div>
 
-    <div class="form-group mb-3">
-        <label for="status">Status <span class="text-danger">*</span></label>
-        <select name="status" id="status" class="form-control @error('status') is-invalid @enderror" required>
-            <option value="aktif" {{ old('status', $occupancy->status ?? 'aktif') == 'aktif' ? 'selected' : '' }}>Aktif</option>
-            <option value="selesai" {{ old('status', $occupancy->status ?? '') == 'selesai' ? 'selected' : '' }}>Selesai</option>
-            <option value="batal" {{ old('status', $occupancy->status ?? '') == 'batal' ? 'selected' : '' }}>Batal</option>
-        </select>
-        @error('status') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
-    </div>
-
     <div class="form-group">
         <button type="submit" class="btn btn-primary">
             <i class="fas fa-save"></i> {{ $occupancy ? 'Update' : 'Simpan' }}

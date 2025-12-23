@@ -7,9 +7,21 @@ use Illuminate\Http\Request;
 
 class KostController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $kosts = Kost::orderBy('id', 'desc')->get();
+        $query = Kost::orderBy('id', 'desc');
+
+        // Search functionality
+        if ($request->filled('q')) {
+            $searchTerm = $request->get('q');
+            $query->where('nama_kost', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('alamat', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('kota', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('email', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('telepon', 'like', '%' . $searchTerm . '%');
+        }
+
+        $kosts = $query->paginate(10);
         return view('kost.index', compact('kosts'));
     }
 

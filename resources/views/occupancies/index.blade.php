@@ -333,9 +333,10 @@
 
         .btn-cinema {
             border: none;
-            padding: 10px 20px;
+            padding: 6px 12px;
             border-radius: 8px;
             font-weight: 600;
+            font-size: 12px;
             cursor: pointer;
             transition: all 0.3s;
         }
@@ -573,6 +574,7 @@
                          data-billing-total="{{ $occ->billing_total ?? '' }}"
                          data-billing-remaining="{{ $occ->billing_remaining ?? '' }}"
                          data-consumer-phone="{{ $occ->consumer->no_hp ?? '' }}"
+                         data-consumer-id="{{ $occ->consumer->id ?? '' }}"
                          data-complete-url="{{ $occ->complete_url ?? '' }}"
                          data-room="{{ $occ->room->nomor_kamar ?? '-' }}"
                          data-tenant="{{ $occ->consumer->nama ?? '-' }}"
@@ -616,6 +618,7 @@
             </div>
             <div class="seat-modal-actions">
                 <a id="modalAdd" class="btn btn-success btn-cinema" href="#" style="display:none;">Tambah Penyewa</a>
+                <a id="modalAddons" class="btn btn-warning btn-cinema" href="#" style="display:none;">Tambah Addons</a>
                 <a id="modalBilling" class="btn btn-info btn-cinema" href="#" style="display:none;">Billing</a>
                 <a id="modalWhatsApp" class="btn btn-success btn-cinema" href="#" target="_blank" style="display:none;">
                     <i class="fab fa-whatsapp"></i> Kirim WA
@@ -623,7 +626,7 @@
                 <form id="modalCompleteForm" method="POST" style="display:none;">
                     @csrf
                 </form>
-                <button id="modalComplete" class="btn btn-success btn-cinema" type="button" style="display:none;" onclick="document.getElementById('modalCompleteForm').submit()">Selesai Sewa</button>
+                <button id="modalComplete" class="btn btn-success btn-cinema" type="button" style="display:none;" onclick="completeOccupancy()">Selesai Sewa</button>
                 <a id="modalEdit" class="btn btn-primary btn-cinema" href="#">Edit</a>
                 <button class="btn btn-secondary btn-cinema" type="button" onclick="closeSeatModal()">Tutup</button>
             </div>
@@ -633,6 +636,16 @@
     <script>
         function closeSeatModal() {
             document.getElementById('seatModal').style.display = 'none';
+        }
+
+        function completeOccupancy() {
+            if (confirm('Yakin ingin menyelesaikan penyewaan ini? Kamar akan menjadi tersedia untuk penyewa baru.')) {
+                document.getElementById('modalCompleteForm').submit();
+            }
+        }
+
+        function isOwner() {
+            return {{ auth()->user()->role_id === 1 ? 'true' : 'false' }};
         }
 
         function openSeatModal(card) {
@@ -661,6 +674,7 @@
                 document.getElementById('modalAdd').style.display = '';
                 document.getElementById('modalAdd').href = data.addUrl;
                 document.getElementById('modalEdit').style.display = 'none';
+                document.getElementById('modalAddons').style.display = 'none';
                 document.getElementById('modalBilling').style.display = 'none';
                 document.getElementById('modalWhatsApp').style.display = 'none';
                 document.getElementById('modalComplete').style.display = 'none';
@@ -676,15 +690,36 @@
                     bodyHTML += `<div class="modal-info-row"><span class="label">Sisa Waktu</span><span class="value">${data.days} hari</span></div>`;
                 }
                 
+                // Show billing remaining if there's unpaid billing
+                if (data.billingRemaining && parseFloat(data.billingRemaining) > 0) {
+                    const billingStatus = data.billingStatus || '';
+                    const statusLabel = billingStatus.toLowerCase() === 'sebagian' ? 'Belum Lunas' : billingStatus;
+                    bodyHTML += `<div class="modal-info-row"><span class="label">Status Tagihan</span><span class="value" style="color: #dc3545;">${statusLabel}</span></div>`;
+                    bodyHTML += `<div class="modal-info-row"><span class="label">Sisa Tagihan</span><span class="value" style="color: #dc3545; font-weight: bold;">Rp ${parseFloat(data.billingRemaining || 0).toLocaleString('id-ID')}</span></div>`;
+                }
+                                
                 document.getElementById('modalAdd').style.display = 'none';
-                document.getElementById('modalEdit').style.display = '';
-                document.getElementById('modalEdit').href = data.editUrl;
                 
+                // Show Edit button only for owner (role_id = 1)
+                if (isOwner()) {
+                    document.getElementById('modalEdit').style.display = '';
+                    document.getElementById('modalEdit').href = data.editUrl;
+                } else {
+                    document.getElementById('modalEdit').style.display = 'none';
+                }
+                
+                // Show Addons button for occupied rooms
+                document.getElementById('modalAddons').style.display = '';
+                document.getElementById('modalAddons').href = '/addon-transactions/create?consumer_id=' + data.consumerId;
+                
+                // Check if billing exists: has any billing status set
+                const hasBilling = !!data.billingStatus;
                 const paid = (data.billingStatus || '').toLowerCase() === 'lunas';
                 const phoneRaw = data.consumerPhone || '';
                 const phone = phoneRaw ? phoneRaw.replace(/^0/, '62').replace(/[^0-9]/g, '') : '';
 
-                if (!paid && data.billingUrl) {
+                if (hasBilling && !paid && data.billingUrl) {
+                    // Has unpaid billing - show billing button
                     document.getElementById('modalBilling').style.display = '';
                     document.getElementById('modalBilling').href = data.billingUrl;
                     
@@ -711,7 +746,7 @@
 
                     // If sudah lunas atau tidak ada tagihan: kirim ajakan booking/perpanjang
                     if (phone) {
-                        const statusInfo = paid ? 'sudah lunas' : 'sedang tidak ada tagihan aktif';
+                        const statusInfo = !hasBilling ? 'sedang tidak ada tagihan aktif' : 'sudah lunas';
                         const daysInfo = data.days ? `Checkout dalam ${data.days} hari.` : '';
                         const message = encodeURIComponent(
                             `Halo ${data.tenant},\n\n` +
@@ -727,7 +762,9 @@
                     }
                 }
                 
-                if (paid && data.completeUrl) {
+                // Show complete button if: (no billing OR paid) AND has complete URL
+                const canComplete = (!hasBilling || paid) && data.completeUrl;
+                if (canComplete) {
                     document.getElementById('modalComplete').style.display = '';
                     document.getElementById('modalCompleteForm').action = data.completeUrl;
                 } else {

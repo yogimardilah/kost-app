@@ -40,7 +40,7 @@
                     <select name="consumer_id" id="consumer_id" class="form-control" required>
                         <option value="">-- Pilih Penyewa --</option>
                         @foreach($consumers as $c)
-                            <option value="{{ $c->id }}">{{ $c->nama }} ({{ $c->nik }})</option>
+                            <option value="{{ $c->id }}" {{ $selectedConsumerId == $c->id ? 'selected' : '' }}>{{ $c->nama }} ({{ $c->nik }})</option>
                         @endforeach
                     </select>
                 </div>

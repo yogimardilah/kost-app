@@ -90,6 +90,9 @@ class RoomOccupancyController extends Controller
                     $occ->billing_remaining = $billing->total_tagihan - $totalPaid;
                 }
 
+                // Always set complete URL - button will show when billing is paid/none
+                $occ->complete_url = route('occupancies.complete', $occ->id);
+
                 $occupancies[] = $occ;
             } else {
                 // Room is available
@@ -213,6 +216,11 @@ class RoomOccupancyController extends Controller
 
     public function edit(RoomOccupancy $occupancy)
     {
+        // Only owner (role_id = 1) can edit
+        if (auth()->user()->role_id !== 1) {
+            abort(403, 'Anda tidak memiliki akses untuk mengedit data penyewaan');
+        }
+
         $rooms = Room::orderBy('nomor_kamar')->get();
         $consumers = Consumer::orderBy('nama')->get();
         return view('occupancies.edit', compact('occupancy','rooms','consumers'));
@@ -220,6 +228,11 @@ class RoomOccupancyController extends Controller
 
     public function update(UpdateRoomOccupancyRequest $request, RoomOccupancy $occupancy)
     {
+        // Only owner (role_id = 1) can update
+        if (auth()->user()->role_id !== 1) {
+            abort(403, 'Anda tidak memiliki akses untuk mengubah data penyewaan');
+        }
+
         $data = $request->validated();
         $occupancy->update($data);
 

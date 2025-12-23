@@ -96,7 +96,6 @@
                         <th>Check-in</th>
                         <th>Check-out</th>
                         <th>Status</th>
-                        <th>Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -124,15 +123,10 @@
                                     {{ ucfirst($o->status) }}
                                 </span>
                             </td>
-                            <td>
-                                <a href="{{ route('occupancies.edit', $o) }}" class="btn btn-sm btn-info">
-                                    <i class="fas fa-eye"></i> Detail
-                                </a>
-                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center">Belum ada data occupancies.</td>
+                            <td colspan="6" class="text-center">Belum ada data occupancies.</td>
                         </tr>
                     @endforelse
                 </tbody>

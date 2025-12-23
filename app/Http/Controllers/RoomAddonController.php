@@ -5,12 +5,22 @@ namespace App\Http\Controllers;
 use App\Models\RoomAddon;
 use App\Http\Requests\StoreRoomAddonRequest;
 use App\Http\Requests\UpdateRoomAddonRequest;
+use Illuminate\Http\Request;
 
 class RoomAddonController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $addons = RoomAddon::orderBy('nama_addon')->get();
+        $query = RoomAddon::orderBy('nama_addon');
+
+        // Search functionality
+        if ($request->filled('q')) {
+            $searchTerm = $request->get('q');
+            $query->where('nama_addon', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('satuan', 'like', '%' . $searchTerm . '%');
+        }
+
+        $addons = $query->paginate(10);
         return view('addons.index', compact('addons'));
     }
 
