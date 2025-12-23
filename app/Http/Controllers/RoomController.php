@@ -44,7 +44,12 @@ class RoomController extends Controller
 
     public function store(StoreRoomRequest $request)
     {
-        Room::create($request->validated());
+        $data = $request->validated();
+        // Set default status to 'tersedia' if not provided
+        if (!isset($data['status'])) {
+            $data['status'] = 'tersedia';
+        }
+        Room::create($data);
         return redirect()->route('rooms.index')->with('success','Kamar berhasil ditambahkan');
     }
 

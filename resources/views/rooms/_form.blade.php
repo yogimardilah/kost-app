@@ -43,6 +43,7 @@
         @error('harga_harian') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
     </div>
 
+    @if($room)
     <div class="form-group mb-3">
         <label for="status">Status <span class="text-danger">*</span></label>
         <select name="status" id="status" class="form-control @error('status') is-invalid @enderror" required>
@@ -52,6 +53,7 @@
         </select>
         @error('status') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
     </div>
+    @endif
 
     <div class="form-group mb-3">
         <label for="kost_id">Kost <span class="text-danger">*</span></label>

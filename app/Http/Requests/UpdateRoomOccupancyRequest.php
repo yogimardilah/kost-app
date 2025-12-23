@@ -18,7 +18,6 @@ class UpdateRoomOccupancyRequest extends FormRequest
             'consumer_id' => 'required|exists:consumers,id',
             'tanggal_masuk' => 'required|date',
             'tanggal_keluar' => 'nullable|date|after_or_equal:tanggal_masuk',
-            'status' => 'required|in:aktif,selesai,batal',
         ];
     }
 
@@ -28,7 +27,6 @@ class UpdateRoomOccupancyRequest extends FormRequest
             'room_id.required' => 'Pilih kamar',
             'consumer_id.required' => 'Pilih konsumen',
             'tanggal_masuk.required' => 'Tanggal masuk harus diisi',
-            'status.required' => 'Status harus diisi',
         ];
     }
 }

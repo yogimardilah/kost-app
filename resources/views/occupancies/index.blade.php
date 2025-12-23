@@ -462,9 +462,9 @@
                 class="form-select form-select-sm"
                 onchange="this.form.submit()"
             >
-                <option value="50" {{ request('per_page', 50) == 50 ? 'selected' : '' }}>50</option>
-                <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
+                <option value="100" {{ request('per_page', 100) == 100 ? 'selected' : '' }}>100</option>
                 <option value="150" {{ request('per_page') == 150 ? 'selected' : '' }}>150</option>
+                <option value="200" {{ request('per_page') == 200 ? 'selected' : '' }}>200</option>
             </select>
         </div>
 

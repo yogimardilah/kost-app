@@ -19,7 +19,6 @@ class StoreRoomOccupancyRequest extends FormRequest
             'tipe_sewa' => 'required|in:bulanan,harian',
             'tanggal_masuk' => 'required|date',
             'tanggal_keluar' => 'nullable|date|after_or_equal:tanggal_masuk',
-            'status' => 'required|in:aktif,selesai,batal',
         ];
     }
 
@@ -30,7 +29,6 @@ class StoreRoomOccupancyRequest extends FormRequest
             'consumer_id.required' => 'Pilih konsumen',
             'tipe_sewa.required' => 'Pilih tipe sewa (bulanan/harian)',
             'tanggal_masuk.required' => 'Tanggal masuk harus diisi',
-            'status.required' => 'Status harus diisi',
         ];
     }
 }

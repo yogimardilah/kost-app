@@ -147,7 +147,7 @@ class RoomOccupancyController extends Controller
 
         // Convert to paginated collection
         $page = request()->get('page', 1);
-        $perPage = (int)request()->get('per_page', 50);
+        $perPage = (int)request()->get('per_page', 100);
         $offset = ($page - 1) * $perPage;
         $paginatedOccupancies = new \Illuminate\Pagination\LengthAwarePaginator(
             array_slice($allRoomsList, $offset, $perPage),
@@ -199,6 +199,11 @@ class RoomOccupancyController extends Controller
         }
         // Remove non-persisted field before create
         unset($data['tipe_sewa']);
+        
+        // Set default status to 'aktif' if not provided
+        if (!isset($data['status'])) {
+            $data['status'] = 'aktif';
+        }
 
         $occupancy = RoomOccupancy::create($data);
 

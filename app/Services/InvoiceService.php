@@ -85,60 +85,66 @@ class InvoiceService
             font-family: Arial, sans-serif;
             font-size: 12px;
             color: #333;
+            line-height: 1.4;
         }
         .container {
-            width: 100%;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
+            padding: 0 10px;
+            box-sizing: border-box;
         }
+
         .header {
             display: flex;
             justify-content: space-between;
             border-bottom: 2px solid #333;
-            padding-bottom: 20px;
-            margin-bottom: 20px;
+            padding: 10px 0 15px 0;
+            margin-bottom: 15px;
+            page-break-after: avoid;
         }
         .company-info h1 {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: bold;
+            margin: 0;
         }
         .company-info p {
-            margin: 5px 0;
-            font-size: 11px;
+            margin: 3px 0;
+            font-size: 10px;
         }
         .invoice-meta {
             text-align: right;
+            page-break-after: avoid;
         }
         .invoice-meta p {
-            margin: 5px 0;
+            margin: 3px 0;
             font-weight: bold;
+            font-size: 11px;
         }
         .invoice-info {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 30px;
+            gap: 15px;
+            margin-bottom: 20px;
+            page-break-after: avoid;
         }
         .invoice-info-box {
             border: 1px solid #ddd;
-            padding: 10px;
+            padding: 8px;
         }
         .invoice-info-box h3 {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             border-bottom: 1px solid #ddd;
-            padding-bottom: 5px;
+            padding-bottom: 3px;
         }
         .invoice-info-box p {
-            margin: 3px 0;
-            font-size: 11px;
+            margin: 2px 0;
+            font-size: 10px;
         }
         .items-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
+            margin: 15px 0;
+            page-break-after: avoid;
         }
         .items-table thead {
             background-color: #f5f5f5;
@@ -146,16 +152,17 @@ class InvoiceService
             border-bottom: 2px solid #333;
         }
         .items-table th, .items-table td {
-            padding: 10px;
+            padding: 8px;
             border: 1px solid #ddd;
             text-align: left;
+            font-size: 10px;
         }
         .items-table th {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
         }
         .items-table td {
-            font-size: 11px;
+            font-size: 10px;
         }
         .items-table td.text-right {
             text-align: right;
@@ -163,39 +170,41 @@ class InvoiceService
         .totals {
             width: 100%;
             margin-top: 20px;
+            page-break-inside: avoid;
         }
         .totals-row {
             display: grid;
             grid-template-columns: 2fr 1fr;
-            gap: 20px;
+            gap: 15px;
         }
         .totals-box {
             border: 1px solid #ddd;
-            padding: 15px;
+            padding: 12px;
         }
         .totals-box h3 {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
         .totals-box .total-item {
             display: flex;
             justify-content: space-between;
-            margin: 5px 0;
-            font-size: 11px;
+            margin: 4px 0;
+            font-size: 10px;
         }
         .totals-box .total-item.total {
             border-top: 1px solid #ddd;
-            padding-top: 10px;
+            padding-top: 8px;
             font-weight: bold;
-            font-size: 12px;
+            font-size: 11px;
         }
         .status-badge {
-            padding: 5px 10px;
+            padding: 4px 8px;
             border-radius: 3px;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: bold;
             display: inline-block;
+            margin-top: 5px;
         }
         .status-pending {
             background-color: #ffebee;
@@ -210,12 +219,13 @@ class InvoiceService
             color: #2e7d32;
         }
         .footer {
-            margin-top: 40px;
+            margin-top: 20px;
             text-align: center;
-            font-size: 10px;
+            font-size: 9px;
             color: #999;
             border-top: 1px solid #ddd;
-            padding-top: 20px;
+            padding-top: 10px;
+            page-break-inside: avoid;
         }
     </style>
 </head>

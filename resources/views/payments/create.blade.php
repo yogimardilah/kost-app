@@ -117,7 +117,6 @@
                     <option value="">-- Pilih Metode --</option>
                     <option value="tunai" {{ old('metode') == 'tunai' ? 'selected' : '' }}>Tunai</option>
                     <option value="transfer" {{ old('metode') == 'transfer' ? 'selected' : '' }}>Transfer</option>
-                    <option value="cek" {{ old('metode') == 'cek' ? 'selected' : '' }}>Cek</option>
                 </select>
                 @error('metode')
                     <span class="invalid-feedback">{{ $message }}</span>
