@@ -9,9 +9,26 @@
 @section('content')
     <div class="card">
         <div class="card-header">
-            <a href="{{ route('consumers.create') }}" class="btn btn-primary btn-sm">
-                <i class="fas fa-plus"></i> Tambah Konsumen
-            </a>
+            <div class="d-flex justify-content-between align-items-center">
+                <a href="{{ route('consumers.create') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus"></i> Tambah Konsumen
+                </a>
+                <form action="{{ route('consumers.index') }}" method="GET" class="form-inline">
+                    <div class="input-group input-group-sm">
+                        <input type="text" name="search" class="form-control" placeholder="Cari NIK, Nama, HP..." value="{{ request('search') }}">
+                        <div class="input-group-append">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i>
+                            </button>
+                            @if(request('search'))
+                                <a href="{{ route('consumers.index') }}" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
         <div class="card-body">
             @if(session('success'))
@@ -42,7 +59,7 @@
                     <tbody>
                         @foreach($consumers as $no => $consumer)
                             <tr>
-                                <td>{{ $no + 1 }}</td>
+                                <td>{{ $consumers->firstItem() + $no }}</td>
                                 <td>{{ $consumer->nik }}</td>
                                 <td>{{ $consumer->nama }}</td>
                                 <td>{{ $consumer->no_hp }}</td>
@@ -63,6 +80,15 @@
                         @endforeach
                     </tbody>
                 </table>
+                
+                <div class="mt-3 d-flex justify-content-between align-items-center">
+                    <div class="text-muted">
+                        Menampilkan {{ $consumers->firstItem() ?? 0 }} - {{ $consumers->lastItem() ?? 0 }} dari {{ $consumers->total() }} data
+                    </div>
+                    <div>
+                        {{ $consumers->links() }}
+                    </div>
+                </div>
             @endif
         </div>
     </div>

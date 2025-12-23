@@ -13,12 +13,14 @@ class Room extends Model
         'nomor_kamar',
         'jenis_kamar',
         'harga',
+        'harga_harian',
         'status',
         'kost_id',
     ];
 
     protected $casts = [
         'harga' => 'decimal:0',
+        'harga_harian' => 'decimal:0',
     ];
 
     // Relations

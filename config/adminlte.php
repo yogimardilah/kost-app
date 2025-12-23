@@ -303,64 +303,50 @@ return [
             'text' => 'Dashboard',
             'url'  => 'dashboard',
             'icon' => 'fas fa-home',
+            'menu_code' => 'dashboard',
         ],
-
-        // Master Data group
         [
-            'text'    => 'Master Data',
-            'icon'    => 'fas fa-database',
+            'text' => 'Master Data',
+            'icon' => 'fas fa-database',
+            'menu_code' => 'master_data',
             'submenu' => [
-                [ 'text' => 'Data Kost', 'url' => 'kost', 'icon' => 'fas fa-building' ],
-                [ 'text' => 'Kamar', 'url' => 'rooms', 'icon' => 'fas fa-door-closed' ],
-                [ 'text' => 'Room Addons', 'url' => 'addons', 'icon' => 'fas fa-puzzle-piece' ],
-                [ 'text' => 'Penyewa', 'url' => 'consumers', 'icon' => 'fas fa-users' ],
+                ['text' => 'Data Kost', 'url' => 'kost', 'icon' => 'fas fa-building', 'menu_code' => 'kost'],
+                ['text' => 'Kamar', 'url' => 'rooms', 'icon' => 'fas fa-door-closed', 'menu_code' => 'rooms'],
+                ['text' => 'Room Addons', 'url' => 'addons', 'icon' => 'fas fa-puzzle-piece', 'menu_code' => 'addons'],
             ],
         ],
-
-        // Transaksi group
         [
-            'text'    => 'Transaksi',
-            'icon'    => 'fas fa-exchange-alt',
+            'text' => 'Transaksi',
+            'icon' => 'fas fa-exchange-alt',
+            'menu_code' => 'transaksi',
             'submenu' => [
-                [ 'text' => 'Occupancies', 'url' => 'occupancies', 'icon' => 'fas fa-bed' ],
-                [ 'text' => 'Billings', 'url' => 'billings', 'icon' => 'fas fa-file-invoice' ],
-                [ 'text' => 'Payments', 'url' => 'payments', 'icon' => 'fas fa-credit-card' ],
+                ['text' => 'Penyewa', 'url' => 'consumers', 'icon' => 'fas fa-users', 'menu_code' => 'consumers'],
+                ['text' => 'Occupancies', 'url' => 'occupancies', 'icon' => 'fas fa-bed', 'menu_code' => 'occupancies'],
+                ['text' => 'Billings', 'url' => 'billings', 'icon' => 'fas fa-file-invoice', 'menu_code' => 'billings'],
+                ['text' => 'Payments', 'url' => 'payments', 'icon' => 'fas fa-credit-card', 'menu_code' => 'payments'],
+                ['text' => 'Transaksi Addon', 'url' => 'addon-transactions', 'icon' => 'fas fa-puzzle-piece', 'menu_code' => 'addon_transactions'],
             ],
         ],
-
-        // Laporan group
         [
-            'text'    => 'Laporan',
-            'icon'    => 'fas fa-chart-line',
+            'text' => 'Laporan',
+            'icon' => 'fas fa-chart-line',
+            'menu_code' => 'laporan',
             'submenu' => [
-                [ 'text' => 'Laporan Hunian', 'url' => 'reports/occupancy', 'icon' => 'fas fa-bed' ],
-                [ 'text' => 'Laporan Keuangan', 'url' => 'reports/finance', 'icon' => 'fas fa-money-bill-wave' ],
+                ['text' => 'Laporan Hunian', 'url' => 'reports/occupancy', 'icon' => 'fas fa-bed', 'menu_code' => 'reports_occupancy'],
+                ['text' => 'Laporan Keuangan', 'url' => 'reports/finance', 'icon' => 'fas fa-money-bill-wave', 'menu_code' => 'reports_finance'],
             ],
         ],
-
-        // Manajemen group
         [
-            'text'    => 'Manajemen',
-            'icon'    => 'fas fa-user-cog',
+            'text' => 'Manajemen',
+            'icon' => 'fas fa-user-cog',
+            'menu_code' => 'manajemen',
             'submenu' => [
-                [ 'text' => 'Users', 'url' => 'users', 'icon' => 'fas fa-users-cog' ],
-                [ 'text' => 'Roles', 'url' => 'roles', 'icon' => 'fas fa-user-shield' ],
+                ['text' => 'Users', 'url' => 'users', 'icon' => 'fas fa-users-cog', 'menu_code' => 'users'],
+                ['text' => 'Roles', 'url' => 'roles', 'icon' => 'fas fa-user-shield', 'menu_code' => 'roles'],
+                ['text' => 'Role Permissions', 'url' => 'role-permissions', 'icon' => 'fas fa-lock', 'menu_code' => 'role_permissions'],
             ],
         ],
-
-        // Settings
-        [
-            'text' => 'Settings',
-            'url'  => 'settings',
-            'icon' => 'fas fa-cog',
-        ],
-
-        // Navbar items:
-        [
-            'type' => 'navbar-search',
-            'text' => 'search',
-            'topnav_right' => true,
-        ],
+        ['text' => 'Settings', 'url' => 'settings', 'icon' => 'fas fa-cog', 'menu_code' => 'settings'],
     ],
 
     /*
@@ -380,6 +366,7 @@ return [
         JeroenNoten\LaravelAdminLte\Menu\Filters\HrefFilter::class,
         JeroenNoten\LaravelAdminLte\Menu\Filters\SearchFilter::class,
         JeroenNoten\LaravelAdminLte\Menu\Filters\ActiveFilter::class,
+        App\Menu\Filters\RolePermissionFilter::class,
         JeroenNoten\LaravelAdminLte\Menu\Filters\ClassesFilter::class,
         JeroenNoten\LaravelAdminLte\Menu\Filters\LangFilter::class,
         JeroenNoten\LaravelAdminLte\Menu\Filters\DataFilter::class,

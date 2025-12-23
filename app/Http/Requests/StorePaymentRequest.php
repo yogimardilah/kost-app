@@ -27,6 +27,7 @@ class StorePaymentRequest extends FormRequest
             'jumlah' => 'required|numeric|min:0.01',
             'metode' => 'required|in:tunai,transfer,cek',
             'bukti_bayar' => 'nullable|string',
+            'bukti_bayar_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
         ];
     }
 
@@ -42,6 +43,9 @@ class StorePaymentRequest extends FormRequest
             'jumlah.min' => 'Jumlah pembayaran harus lebih dari 0',
             'metode.required' => 'Metode pembayaran wajib dipilih',
             'metode.in' => 'Metode pembayaran harus salah satu dari: tunai, transfer, cek',
+            'bukti_bayar_file.file' => 'Bukti pembayaran harus berupa file',
+            'bukti_bayar_file.mimes' => 'Bukti pembayaran harus JPG, JPEG, PNG, atau PDF',
+            'bukti_bayar_file.max' => 'Ukuran bukti pembayaran maks 2MB',
         ];
     }
 }

@@ -14,13 +14,25 @@ class RoomController extends Controller
     {
         $query = Room::with('addons', 'occupancies');
 
+        // filter by kost
         if ($kostId) {
             $query->where('kost_id', $kostId);
         } elseif ($request->filled('kost_id')) {
             $query->where('kost_id', $request->get('kost_id'));
         }
 
-        $rooms = $query->get();
+        // search by nomor_kamar or jenis_kamar
+        if ($request->filled('q')) {
+            $q = $request->get('q');
+            $query->where(function($sub) use ($q) {
+                $sub->where('nomor_kamar', 'like', "%{$q}%")
+                    ->orWhere('jenis_kamar', 'like', "%{$q}%");
+            });
+        }
+
+        // paginate results and keep query string (search, kost_id)
+        $rooms = $query->orderBy('nomor_kamar')->paginate(12)->withQueryString();
+
         return view('rooms.index', compact('rooms','kostId'));
     }
 

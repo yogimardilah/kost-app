@@ -18,6 +18,7 @@ class StoreConsumerRequest extends FormRequest
             'nama' => 'required|string|max:255',
             'no_hp' => 'required|string|max:20',
             'kendaraan' => 'nullable|string|max:255',
+            'tanda_pengenal' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
         ];
     }
 

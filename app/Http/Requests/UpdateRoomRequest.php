@@ -19,6 +19,7 @@ class UpdateRoomRequest extends FormRequest
             'nomor_kamar' => 'required|string|unique:rooms,nomor_kamar,' . $roomId,
             'jenis_kamar' => 'required|string|in:single,double,suite',
             'harga' => 'required|numeric|min:50000',
+            'harga_harian' => 'nullable|numeric|min:5000',
             'status' => 'required|in:tersedia,terisi',
             'kost_id' => 'required|exists:kosts,id',
         ];

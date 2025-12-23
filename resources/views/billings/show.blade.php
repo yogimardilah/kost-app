@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@php use Illuminate\Support\Facades\Storage; @endphp
 
 @section('title','Tagihan Detail')
 
@@ -61,15 +62,44 @@
                         <th>Tanggal</th>
                         <th>Jumlah</th>
                         <th>Metode</th>
+                        <th>Bukti</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($billing->payments as $pidx => $p)
+                    @php
+                        $note = $p->bukti_bayar;
+                        $filePath = null;
+                        if ($note && str_contains($note, 'file:')) {
+                            [$notePart, $filePart] = explode('file:', $note, 2);
+                            $note = trim(trim($notePart), ' |');
+                            $filePath = trim($filePart);
+                        } elseif ($note && str_starts_with($note, 'payments/')) {
+                            $filePath = $note;
+                            $note = null;
+                        }
+                    @endphp
                     <tr>
                         <td>{{ $pidx + 1 }}</td>
                         <td>{{ optional($p->tanggal_bayar ? \Carbon\Carbon::parse($p->tanggal_bayar) : null)->format('Y-m-d') }}</td>
                         <td>Rp {{ number_format($p->jumlah,0,',','.') }}</td>
                         <td>{{ $p->metode ?? '-' }}</td>
+                        <td>
+                            @if($note)
+                                <div class="mb-2">{{ $note }}</div>
+                            @endif
+                            @if($filePath)
+                                <div class="mb-2">
+                                    <a class="btn btn-sm btn-outline-primary" href="{{ Storage::url($filePath) }}" target="_blank">
+                                        <i class="fas fa-download"></i> Unduh Bukti
+                                    </a>
+                                </div>
+                                <img src="{{ Storage::url($filePath) }}" alt="Bukti Pembayaran" class="img-thumbnail" style="max-width: 300px; max-height: 300px;">
+                            @endif
+                            @if(!$note && !$filePath)
+                                -
+                            @endif
+                        </td>
                     </tr>
                     @endforeach
                 </tbody>

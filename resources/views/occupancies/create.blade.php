@@ -9,7 +9,7 @@
 @section('content')
     <div class="card">
         <div class="card-body">
-            @include('occupancies._form', ['occupancy' => null])
+                @include('occupancies._form', ['occupancy' => null, 'selectedRoomId' => $selectedRoomId ?? null])
         </div>
     </div>
 @endsection

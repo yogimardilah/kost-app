@@ -9,7 +9,7 @@ class Consumer extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['nik','nama','no_hp','kendaraan'];
+    protected $fillable = ['nik','nama','no_hp','kendaraan','tanda_pengenal'];
 
     public function occupancies()
     {

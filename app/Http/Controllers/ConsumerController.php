@@ -10,7 +10,19 @@ class ConsumerController extends Controller
 {
     public function index()
     {
-        $consumers = Consumer::orderBy('id', 'desc')->get();
+        $search = request('search');
+        
+        $consumers = Consumer::query()
+            ->when($search, function($query) use ($search) {
+                $query->where('nama', 'LIKE', "%{$search}%")
+                      ->orWhere('nik', 'LIKE', "%{$search}%")
+                      ->orWhere('no_hp', 'LIKE', "%{$search}%")
+                      ->orWhere('kendaraan', 'LIKE', "%{$search}%");
+            })
+            ->orderBy('id', 'desc')
+            ->paginate(10)
+            ->withQueryString();
+        
         return view('consumers.index', compact('consumers'));
     }
 
@@ -21,7 +33,13 @@ class ConsumerController extends Controller
 
     public function store(StoreConsumerRequest $request)
     {
-        Consumer::create($request->validated());
+        $data = $request->validated();
+        
+        if ($request->hasFile('tanda_pengenal')) {
+            $data['tanda_pengenal'] = $request->file('tanda_pengenal')->store('tanda_pengenal', 'public');
+        }
+        
+        Consumer::create($data);
         return redirect()->route('consumers.index')->with('success', 'Penyewa berhasil ditambahkan');
     }
 
@@ -32,12 +50,27 @@ class ConsumerController extends Controller
 
     public function update(UpdateConsumerRequest $request, Consumer $consumer)
     {
-        $consumer->update($request->validated());
+        $data = $request->validated();
+        
+        if ($request->hasFile('tanda_pengenal')) {
+            // Delete old file if exists
+            if ($consumer->tanda_pengenal && \Storage::disk('public')->exists($consumer->tanda_pengenal)) {
+                \Storage::disk('public')->delete($consumer->tanda_pengenal);
+            }
+            $data['tanda_pengenal'] = $request->file('tanda_pengenal')->store('tanda_pengenal', 'public');
+        }
+        
+        $consumer->update($data);
         return redirect()->route('consumers.index')->with('success', 'Penyewa berhasil diperbarui');
     }
 
     public function destroy(Consumer $consumer)
     {
+        // Delete file if exists
+        if ($consumer->tanda_pengenal && \Storage::disk('public')->exists($consumer->tanda_pengenal)) {
+            \Storage::disk('public')->delete($consumer->tanda_pengenal);
+        }
+        
         $consumer->delete();
         return redirect()->route('consumers.index')->with('success', 'Penyewa berhasil dihapus');
     }

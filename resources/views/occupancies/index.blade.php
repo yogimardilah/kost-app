@@ -1,60 +1,629 @@
 @extends('layouts.app')
 
-@section('title', 'Daftar Penyewaan')
+@section('title', 'Seat Map - Kamar Kost')
 
 @section('content_header')
-    <h1>Daftar Penyewaan / Occupancies</h1>
+    <h1>Seat Map - Status Kamar</h1>
 @endsection
 
 @section('content')
-    <div class="card">
-        <div class="card-header">
-            <a href="{{ route('occupancies.create') }}" class="btn btn-primary btn-sm">
-                <i class="fas fa-plus"></i> Tambah Penyewaan
-            </a>
-        </div>
-        <div class="card-body">
-            @if(session('success'))
-                <div class="alert alert-success">{{ session('success') }}</div>
-            @endif
+    <style>
+        .seat-map-container {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        }
 
-            @if($occupancies->isEmpty())
-                <div class="alert alert-info">Belum ada data penyewaan.</div>
-            @else
-                <table class="table table-bordered table-striped">
-                    <thead>
-                        <tr>
-                            <th>No</th>
-                            <th>Kamar</th>
-                            <th>Penyewa</th>
-                            <th>Tanggal Masuk</th>
-                            <th>Tanggal Keluar</th>
-                            <th>Status</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($occupancies as $i => $occ)
-                        <tr>
-                            <td>{{ $i + 1 }}</td>
-                            <td>{{ $occ->room->nomor_kamar ?? '-' }}</td>
-                            <td>{{ $occ->consumer->nama ?? '-' }}</td>
-                            <td>{{ $occ->tanggal_masuk }}</td>
-                            <td>{{ $occ->tanggal_keluar ?? '-' }}</td>
-                            <td>{{ $occ->status }}</td>
-                            <td>
-                                <a href="{{ route('occupancies.edit', $occ->id) }}" class="btn btn-warning btn-sm">Edit</a>
-                                <form action="{{ route('occupancies.destroy', $occ->id) }}" method="POST" style="display:inline;">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button class="btn btn-danger btn-sm" onclick="return confirm('Yakin hapus?')">Hapus</button>
-                                </form>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            @endif
+        .cinema-screen {
+            background: linear-gradient(to bottom, #1a1a2e 0%, #16213e 100%);
+            border-radius: 10px 10px 50% 50%;
+            padding: 15px;
+            text-align: center;
+            color: #fff;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        .seat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .seat-card {
+            background: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            position: relative;
+            height: 100px;
+        }
+
+        .seat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        .seat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, currentColor, transparent);
+        }
+
+        .seat-card.available::before { color: #28a745; }
+        .seat-card.occupied::before { color: #007bff; }
+        .seat-card.warning::before { color: #dc3545; }
+        .seat-card.expired::before { color: #6c757d; }
+
+        .seat-header {
+            padding: 12px 10px;
+            color: #fff;
+            position: relative;
+            height: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .seat-header.available {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .seat-header.occupied {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        }
+
+        .seat-header.warning {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+
+        .seat-header.expired {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        }
+
+        .seat-number {
+            font-size: 28px;
+            font-weight: 900;
+            margin-bottom: 3px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        .seat-tenant {
+            font-size: 10px;
+            opacity: 0.85;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 80px;
+            text-align: center;
+        }
+
+        .seat-badge {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 8px;
+            font-weight: 700;
+            background: rgba(255,255,255,0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .seat-body {
+            display: none;
+        }
+
+        .seat-info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 12px;
+            color: #495057;
+        }
+
+        .seat-info-row .label {
+            font-weight: 600;
+        }
+
+        .seat-info-row .value {
+            font-weight: 400;
+        }
+
+        .days-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .days-badge.danger { background: #fff3cd; color: #856404; }
+        .days-badge.success { background: #d1ecf1; color: #0c5460; }
+
+        .legend-container {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .legend-box {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .legend-box.available { background: linear-gradient(135deg, #28a745, #20c997); }
+        .legend-box.occupied { background: linear-gradient(135deg, #007bff, #0056b3); }
+        .legend-box.warning { background: linear-gradient(135deg, #dc3545, #c82333); }
+        .legend-box.expired { background: linear-gradient(135deg, #6c757d, #495057); }
+
+        .search-bar {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            background: rgba(255,255,255,0.9);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 15px;
+            width: 100%;
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-box {
+            flex: 1;
+            min-width: 150px;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 15px;
+            color: #fff;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: 900;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        /* Modal */
+        .seat-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .seat-modal {
+            background: #fff;
+            border-radius: 15px;
+            width: 400px;
+            max-width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            animation: slideUp 0.3s;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .seat-modal-header {
+            padding: 20px;
+            color: #fff;
+            position: relative;
+        }
+
+        .seat-modal-header.available { background: linear-gradient(135deg, #28a745, #20c997); }
+        .seat-modal-header.occupied { background: linear-gradient(135deg, #007bff, #0056b3); }
+        .seat-modal-header.warning { background: linear-gradient(135deg, #dc3545, #c82333); }
+        .seat-modal-header.expired { background: linear-gradient(135deg, #6c757d, #495057); }
+
+        .seat-modal-title {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 900;
+        }
+
+        .seat-modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            border: none;
+            background: rgba(255,255,255,0.3);
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            color: #fff;
+            transition: all 0.3s;
+        }
+
+        .seat-modal-close:hover {
+            background: rgba(255,255,255,0.5);
+            transform: rotate(90deg);
+        }
+
+        .seat-modal-body {
+            padding: 25px;
+        }
+
+        .modal-info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+
+        .modal-info-row:last-child {
+            border-bottom: none;
+        }
+
+        .modal-info-row .label {
+            font-weight: 600;
+            color: #666;
+        }
+
+        .modal-info-row .value {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .seat-modal-actions {
+            padding: 20px;
+            background: #f8f9fa;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .btn-cinema {
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-cinema:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        @media (max-width: 768px) {
+            .seat-grid {
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+                gap: 8px;
+            }
+            
+            .seat-card {
+                height: 85px;
+            }
+            
+            .seat-number {
+                font-size: 22px;
+            }
+            
+            .seat-tenant {
+                font-size: 9px;
+            }
+        }
+    </style>
+
+    <div class="seat-map-container">
+        <!-- Cinema Screen -->
+        <div class="cinema-screen">
+            🏠 KOST MANAGEMENT SYSTEM
+        </div>
+
+        <!-- Search & Stats -->
+        <div class="search-bar">
+            <form method="GET" action="{{ route('occupancies.index') }}" class="d-flex gap-2">
+                <input type="text" name="q" value="{{ request('q') }}" class="search-input" placeholder="🔍 Cari nomor kamar atau nama penyewa...">
+                <button class="btn btn-light" type="submit">Cari</button>
+                @if(request('q'))
+                    <a href="{{ route('occupancies.index') }}" class="btn btn-secondary">Reset</a>
+                @endif
+                <a href="{{ route('occupancies.create') }}" class="btn btn-success">+ Tambah</a>
+            </form>
+        </div>
+
+        <!-- Statistics -->
+        @php
+            $totalRooms = $occupancies->total() + $availableRooms->count();
+            $occupied = $occupancies->total();
+            $available = $availableRooms->count();
+            $occupancyRate = $totalRooms > 0 ? round(($occupied / $totalRooms) * 100) : 0;
+        @endphp
+
+        <div class="stats-row">
+            <div class="stat-box">
+                <div class="stat-number">{{ $totalRooms }}</div>
+                <div class="stat-label">Total Kamar</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">{{ $occupied }}</div>
+                <div class="stat-label">Terisi</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">{{ $available }}</div>
+                <div class="stat-label">Tersedia</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">{{ $occupancyRate }}%</div>
+                <div class="stat-label">Okupansi</div>
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="legend-container">
+            <div class="legend-item">
+                <div class="legend-box available"></div>
+                <span>Tersedia</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box occupied"></div>
+                <span>Terisi</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box warning"></div>
+                <span>Belum Bayar</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box expired"></div>
+                <span>Tidak Aktif</span>
+            </div>
+        </div>
+
+        @if(session('success'))
+            <div class="alert alert-success">{{ session('success') }}</div>
+        @endif
+
+        <!-- Seat Map Grid -->
+        <div class="seat-grid">
+            <!-- Occupied Rooms -->
+            @foreach($occupancies as $occ)
+                @php
+                    $cardClass = 'occupied';
+                    if (!empty($occ->expired)) $cardClass = 'expired';
+                    elseif (!empty($occ->due_soon_unpaid)) $cardClass = 'warning';
+                @endphp
+
+                <div class="seat-card {{ $cardClass }}" onclick="openSeatModal(this)" 
+                     data-type="occupancy"
+                     data-class="{{ $cardClass }}"
+                     data-edit-url="{{ route('occupancies.edit', $occ) }}"
+                     data-billing-url="{{ $occ->billing_url ?? '' }}"
+                     data-billing-status="{{ $occ->billing_status ?? '' }}"
+                     data-billing-invoice="{{ $occ->billing_invoice ?? '' }}"
+                     data-billing-total="{{ $occ->billing_total ?? '' }}"
+                     data-billing-remaining="{{ $occ->billing_remaining ?? '' }}"
+                     data-consumer-phone="{{ $occ->consumer->no_hp ?? '' }}"
+                     data-complete-url="{{ $occ->complete_url ?? '' }}"
+                     data-room="{{ $occ->room->nomor_kamar ?? '-' }}"
+                     data-tenant="{{ $occ->consumer->nama ?? '-' }}"
+                     data-status="{{ $occ->status }}"
+                     data-masuk="{{ $occ->tanggal_masuk }}"
+                     data-keluar="{{ $occ->tanggal_keluar }}"
+                     data-days="{{ is_null($occ->days_remaining) ? '' : $occ->days_remaining }}">
+                    <div class="seat-header {{ $cardClass }}">
+                        <span class="seat-badge">
+                            @if(!empty($occ->expired))
+                                ✖
+                            @elseif(!empty($occ->due_soon_unpaid))
+                                !
+                            @else
+                                ✓
+                            @endif
+                        </span>
+                        <div class="seat-number">{{ $occ->room->nomor_kamar ?? '-' }}</div>
+                        <div class="seat-tenant">{{ Str::limit($occ->consumer->nama ?? '-', 12) }}</div>
+                    </div>
+                </div>
+            @endforeach
+
+            <!-- Available Rooms -->
+            @foreach($availableRooms as $room)
+                <div class="seat-card available" onclick="openSeatModal(this)"
+                     data-type="available"
+                     data-class="available"
+                     data-edit-url="{{ route('rooms.edit', $room) }}"
+                     data-add-url="{{ route('occupancies.create', ['room_id' => $room->id]) }}"
+                     data-room="{{ $room->nomor_kamar }}"
+                     data-tenant="-"
+                     data-status="{{ $room->status }}"
+                     data-jenis="{{ $room->jenis_kamar }}"
+                     data-harga="{{ number_format($room->harga,0,',','.') }}"
+                     data-harga-harian="{{ $room->harga_harian ? number_format($room->harga_harian,0,',','.') : '-' }}">
+                    <div class="seat-header available">
+                        <span class="seat-badge">○</span>
+                        <div class="seat-number">{{ $room->nomor_kamar }}</div>
+                        <div class="seat-tenant">{{ Str::limit($room->jenis_kamar, 12) }}</div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+
+        <div class="mt-4 d-flex justify-content-center">
+            {{ $occupancies->links() }}
         </div>
     </div>
+
+    <!-- Modal -->
+    <div class="seat-modal-backdrop" id="seatModal" onclick="if(event.target === this) closeSeatModal()">
+        <div class="seat-modal">
+            <div class="seat-modal-header occupied" id="modalHeader">
+                <button class="seat-modal-close" onclick="closeSeatModal()">&times;</button>
+                <div class="seat-modal-title" id="modalRoom">-</div>
+                <div style="font-size: 14px; margin-top: 5px; opacity: 0.9;" id="modalTenant">-</div>
+            </div>
+            <div class="seat-modal-body" id="modalBody">
+                <!-- Dynamic content -->
+            </div>
+            <div class="seat-modal-actions">
+                <a id="modalAdd" class="btn btn-success btn-cinema" href="#" style="display:none;">Tambah Penyewa</a>
+                <a id="modalBilling" class="btn btn-info btn-cinema" href="#" style="display:none;">Billing</a>
+                <a id="modalWhatsApp" class="btn btn-success btn-cinema" href="#" target="_blank" style="display:none;">
+                    <i class="fab fa-whatsapp"></i> Kirim WA
+                </a>
+                <form id="modalCompleteForm" method="POST" style="display:none;">
+                    @csrf
+                </form>
+                <button id="modalComplete" class="btn btn-success btn-cinema" type="button" style="display:none;" onclick="document.getElementById('modalCompleteForm').submit()">Selesai Sewa</button>
+                <a id="modalEdit" class="btn btn-primary btn-cinema" href="#">Edit</a>
+                <button class="btn btn-secondary btn-cinema" type="button" onclick="closeSeatModal()">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function closeSeatModal() {
+            document.getElementById('seatModal').style.display = 'none';
+        }
+
+        function openSeatModal(card) {
+            const modal = document.getElementById('seatModal');
+            const header = document.getElementById('modalHeader');
+            const body = document.getElementById('modalBody');
+            
+            const data = card.dataset;
+            const cardClass = data.class || 'occupied';
+            
+            header.className = 'seat-modal-header ' + cardClass;
+            document.getElementById('modalRoom').textContent = data.room;
+            document.getElementById('modalTenant').textContent = data.tenant;
+            
+            // Build modal body
+            let bodyHTML = '';
+            
+            if (data.type === 'available') {
+                bodyHTML = `
+                    <div class="modal-info-row"><span class="label">Status</span><span class="value">${data.status}</span></div>
+                    <div class="modal-info-row"><span class="label">Jenis</span><span class="value">${data.jenis}</span></div>
+                    <div class="modal-info-row"><span class="label">Harga Bulanan</span><span class="value">Rp ${data.harga}</span></div>
+                    <div class="modal-info-row"><span class="label">Harga Harian</span><span class="value">Rp ${data.hargaHarian}</span></div>
+                `;
+                
+                document.getElementById('modalAdd').style.display = '';
+                document.getElementById('modalAdd').href = data.addUrl;
+                document.getElementById('modalEdit').style.display = 'none';
+                document.getElementById('modalBilling').style.display = 'none';
+                document.getElementById('modalComplete').style.display = 'none';
+            } else {
+                bodyHTML = `
+                    <div class="modal-info-row"><span class="label">Penyewa</span><span class="value">${data.tenant}</span></div>
+                    <div class="modal-info-row"><span class="label">Status</span><span class="value">${data.status}</span></div>
+                    <div class="modal-info-row"><span class="label">Check-in</span><span class="value">${data.masuk}</span></div>
+                    <div class="modal-info-row"><span class="label">Check-out</span><span class="value">${data.keluar || '-'}</span></div>
+                `;
+                
+                if (data.days) {
+                    bodyHTML += `<div class="modal-info-row"><span class="label">Sisa Waktu</span><span class="value">${data.days} hari</span></div>`;
+                }
+                
+                document.getElementById('modalAdd').style.display = 'none';
+                document.getElementById('modalEdit').style.display = '';
+                document.getElementById('modalEdit').href = data.editUrl;
+                
+                const paid = (data.billingStatus || '').toLowerCase() === 'lunas';
+                if (!paid && data.billingUrl) {
+                    document.getElementById('modalBilling').style.display = '';
+                    document.getElementById('modalBilling').href = data.billingUrl;
+                    
+                    // Show WhatsApp button if unpaid billing exists and consumer has phone
+                    if (data.consumerPhone && data.billingInvoice && data.billingRemaining) {
+                        const phone = data.consumerPhone.replace(/^0/, '62').replace(/[^0-9]/g, '');
+                        const message = encodeURIComponent(
+                            `Halo ${data.tenant},\\n\\n` +
+                            `Informasi tagihan kost Anda:\\n` +
+                            `Invoice: ${data.billingInvoice}\\n` +
+                            `Total Tagihan: Rp ${parseFloat(data.billingTotal || 0).toLocaleString('id-ID')}\\n` +
+                            `Sisa Tagihan: Rp ${parseFloat(data.billingRemaining || 0).toLocaleString('id-ID')}\\n\\n` +
+                            `Mohon segera melakukan pembayaran. Terima kasih.`
+                        );
+                        const waUrl = `https://wa.me/${phone}?text=${message}`;
+                        document.getElementById('modalWhatsApp').style.display = '';
+                        document.getElementById('modalWhatsApp').href = waUrl;
+                    } else {
+                        document.getElementById('modalWhatsApp').style.display = 'none';
+                    }
+                } else {
+                    document.getElementById('modalBilling').style.display = 'none';
+                    document.getElementById('modalWhatsApp').style.display = 'none';
+                }
+                
+                if (paid && data.completeUrl) {
+                    document.getElementById('modalComplete').style.display = '';
+                    document.getElementById('modalCompleteForm').action = data.completeUrl;
+                } else {
+                    document.getElementById('modalComplete').style.display = 'none';
+                }
+            }
+            
+            body.innerHTML = bodyHTML;
+            modal.style.display = 'flex';
+        }
+    </script>
+
 @endsection

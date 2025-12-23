@@ -92,6 +92,7 @@
                         <x-slot name="content">
                             <x-dropdown-link :href="route('users.index')">{{ __('Users') }}</x-dropdown-link>
                             <x-dropdown-link :href="route('roles.index')">{{ __('Roles') }}</x-dropdown-link>
+                            <x-dropdown-link :href="route('role-permissions.index')">{{ __('Role Permissions') }}</x-dropdown-link>
                         </x-slot>
                     </x-dropdown>
                 </div>

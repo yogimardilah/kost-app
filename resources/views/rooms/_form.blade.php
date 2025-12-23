@@ -32,8 +32,15 @@
     <div class="form-group mb-3">
         <label for="harga">Harga Bulanan (Rp) <span class="text-danger">*</span></label>
         <input type="number" name="harga" id="harga" class="form-control @error('harga') is-invalid @enderror" value="{{ old('harga', $room->harga ?? '') }}" min="50000" required>
-        <small class="form-text text-muted">Minimal Rp 50.000</small>
+        <small class="form-text text-muted">Minimal Rp 50.000 - Harga untuk periode 30 hari</small>
         @error('harga') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+    </div>
+
+    <div class="form-group mb-3">
+        <label for="harga_harian">Harga Harian (Rp)</label>
+        <input type="number" name="harga_harian" id="harga_harian" class="form-control @error('harga_harian') is-invalid @enderror" value="{{ old('harga_harian', $room->harga_harian ?? '') }}" min="5000">
+        <small class="form-text text-muted">Opsional - Harga untuk sewa per hari</small>
+        @error('harga_harian') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
     </div>
 
     <div class="form-group mb-3">
