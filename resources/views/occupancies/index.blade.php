@@ -397,21 +397,31 @@
 
         <!-- Search & Stats -->
         <div class="search-bar">
-            <form method="GET" action="{{ route('occupancies.index') }}" class="search-form d-flex gap-2">
-                <input type="text" name="q" value="{{ request('q') }}" class="search-input" placeholder="🔍 Cari nomor kamar atau nama penyewa...">
-                <button class="btn btn-light" type="submit">Cari</button>
-                @if(request('q'))
-                    <a href="{{ route('occupancies.index') }}" class="btn btn-secondary">Reset</a>
-                @endif
-                <a href="{{ route('occupancies.create') }}" class="btn btn-success">+ Tambah</a>
+            <form method="GET" action="{{ route('occupancies.index') }}" class="search-form">
+                <div class="d-flex gap-2 mb-2">
+                    <input type="text" name="q" value="{{ request('q') }}" class="search-input" placeholder="🔍 Cari nomor kamar atau nama penyewa...">
+                    <button class="btn btn-light" type="submit">Cari</button>
+                    @if(request('q'))
+                        <a href="{{ route('occupancies.index') }}" class="btn btn-secondary">Reset</a>
+                    @endif
+                    <a href="{{ route('occupancies.create') }}" class="btn btn-success">+ Tambah</a>
+                </div>
+                <div class="d-flex gap-2 align-items-center" style="justify-content: center;">
+                    <label for="per_page" style="color: #fff; font-size: 12px; margin: 0;">Tampilkan per halaman:</label>
+                    <select name="per_page" id="per_page" class="form-control" style="width: 80px; padding: 5px; font-size: 12px;" onchange="this.form.submit()">
+                        <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
+                        <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
+                        <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>150</option>
+                    </select>
+                </div>
             </form>
         </div>
 
         <!-- Statistics -->
         @php
-            $totalRooms = $occupancies->total() + $availableRooms->count();
-            $occupied = $occupancies->total();
-            $available = $availableRooms->count();
+            $totalRooms = $paginatedOccupancies->total();
+            $occupied = count($occupancies);
+            $available = count($availableRooms);
             $occupancyRate = $totalRooms > 0 ? round(($occupied / $totalRooms) * 100) : 0;
         @endphp
 
@@ -464,76 +474,78 @@
 
         <!-- Seat Map Grid -->
         <div class="seat-grid">
-            <!-- Occupied Rooms -->
-            @foreach($occupancies as $occ)
-                @php
-                    $cardClass = 'occupied';
-                    if (!empty($occ->expired)) {
-                        $cardClass = 'expired';
-                    } elseif (!empty($occ->due_soon_unpaid)) {
-                        $cardClass = 'warning';
-                    } elseif (!empty($occ->due_soon)) {
-                        $cardClass = 'soon';
-                    }
-                @endphp
-
-                <div class="seat-card {{ $cardClass }}" onclick="openSeatModal(this)" 
-                     data-type="occupancy"
-                     data-class="{{ $cardClass }}"
-                     data-edit-url="{{ route('occupancies.edit', $occ) }}"
-                     data-billing-url="{{ $occ->billing_url ?? '' }}"
-                     data-billing-status="{{ $occ->billing_status ?? '' }}"
-                     data-billing-invoice="{{ $occ->billing_invoice ?? '' }}"
-                     data-billing-total="{{ $occ->billing_total ?? '' }}"
-                     data-billing-remaining="{{ $occ->billing_remaining ?? '' }}"
-                     data-consumer-phone="{{ $occ->consumer->no_hp ?? '' }}"
-                     data-complete-url="{{ $occ->complete_url ?? '' }}"
-                     data-room="{{ $occ->room->nomor_kamar ?? '-' }}"
-                     data-tenant="{{ $occ->consumer->nama ?? '-' }}"
-                     data-status="{{ $occ->status }}"
-                     data-masuk="{{ $occ->tanggal_masuk }}"
-                     data-keluar="{{ $occ->tanggal_keluar }}"
-                     data-days="{{ is_null($occ->days_remaining) ? '' : $occ->days_remaining }}">
-                    <div class="seat-header {{ $cardClass }}">
-                        <span class="seat-badge">
-                            @if(!empty($occ->expired))
-                                ✖
-                            @elseif(!empty($occ->due_soon_unpaid))
-                                !
-                            @else
-                                ✓
-                            @endif
-                        </span>
-                        <div class="seat-number">{{ $occ->room->nomor_kamar ?? '-' }}</div>
-                        <div class="seat-tenant">{{ Str::limit($occ->consumer->nama ?? '-', 12) }}</div>
+            <!-- All Rooms (Occupied and Available) -->
+            @foreach($paginatedOccupancies as $item)
+                @if($item->status === 'available')
+                    {{-- Available Room --}}
+                    <div class="seat-card available" onclick="openSeatModal(this)"
+                         data-type="available"
+                         data-class="available"
+                         data-edit-url="{{ route('rooms.edit', $item->room) }}"
+                         data-add-url="{{ route('occupancies.create', ['room_id' => $item->room->id]) }}"
+                         data-room="{{ $item->room->nomor_kamar }}"
+                         data-tenant="-"
+                         data-status="{{ $item->room->status }}"
+                         data-jenis="{{ $item->room->jenis_kamar }}"
+                         data-harga="{{ number_format($item->room->harga,0,',','.') }}"
+                         data-harga-harian="{{ $item->room->harga_harian ? number_format($item->room->harga_harian,0,',','.') : '-' }}">
+                        <div class="seat-header available">
+                            <span class="seat-badge">○</span>
+                            <div class="seat-number">{{ $item->room->nomor_kamar }}</div>
+                            <div class="seat-tenant">{{ Str::limit($item->room->jenis_kamar, 12) }}</div>
+                        </div>
                     </div>
-                </div>
-            @endforeach
+                @else
+                    {{-- Occupied Room --}}
+                    @php
+                        $occ = $item;
+                        $cardClass = 'occupied';
+                        if (!empty($occ->expired)) {
+                            $cardClass = 'expired';
+                        } elseif (!empty($occ->due_soon_unpaid)) {
+                            $cardClass = 'warning';
+                        } elseif (!empty($occ->due_soon)) {
+                            $cardClass = 'soon';
+                        }
+                    @endphp
 
-            <!-- Available Rooms -->
-            @foreach($availableRooms as $room)
-                <div class="seat-card available" onclick="openSeatModal(this)"
-                     data-type="available"
-                     data-class="available"
-                     data-edit-url="{{ route('rooms.edit', $room) }}"
-                     data-add-url="{{ route('occupancies.create', ['room_id' => $room->id]) }}"
-                     data-room="{{ $room->nomor_kamar }}"
-                     data-tenant="-"
-                     data-status="{{ $room->status }}"
-                     data-jenis="{{ $room->jenis_kamar }}"
-                     data-harga="{{ number_format($room->harga,0,',','.') }}"
-                     data-harga-harian="{{ $room->harga_harian ? number_format($room->harga_harian,0,',','.') : '-' }}">
-                    <div class="seat-header available">
-                        <span class="seat-badge">○</span>
-                        <div class="seat-number">{{ $room->nomor_kamar }}</div>
-                        <div class="seat-tenant">{{ Str::limit($room->jenis_kamar, 12) }}</div>
+                    <div class="seat-card {{ $cardClass }}" onclick="openSeatModal(this)" 
+                         data-type="occupancy"
+                         data-class="{{ $cardClass }}"
+                         data-edit-url="{{ route('occupancies.edit', $occ) }}"
+                         data-billing-url="{{ $occ->billing_url ?? '' }}"
+                         data-billing-status="{{ $occ->billing_status ?? '' }}"
+                         data-billing-invoice="{{ $occ->billing_invoice ?? '' }}"
+                         data-billing-total="{{ $occ->billing_total ?? '' }}"
+                         data-billing-remaining="{{ $occ->billing_remaining ?? '' }}"
+                         data-consumer-phone="{{ $occ->consumer->no_hp ?? '' }}"
+                         data-complete-url="{{ $occ->complete_url ?? '' }}"
+                         data-room="{{ $occ->room->nomor_kamar ?? '-' }}"
+                         data-tenant="{{ $occ->consumer->nama ?? '-' }}"
+                         data-status="{{ $occ->status }}"
+                         data-masuk="{{ $occ->tanggal_masuk }}"
+                         data-keluar="{{ $occ->tanggal_keluar }}"
+                         data-days="{{ is_null($occ->days_remaining) ? '' : $occ->days_remaining }}">
+                        <div class="seat-header {{ $cardClass }}">
+                            <span class="seat-badge">
+                                @if(!empty($occ->expired))
+                                    ✖
+                                @elseif(!empty($occ->due_soon_unpaid))
+                                    !
+                                @else
+                                    ✓
+                                @endif
+                            </span>
+                            <div class="seat-number">{{ $occ->room->nomor_kamar ?? '-' }}</div>
+                            <div class="seat-tenant">{{ Str::limit($occ->consumer->nama ?? '-', 12) }}</div>
+                        </div>
                     </div>
-                </div>
+                @endif
             @endforeach
         </div>
 
         <div class="mt-4 d-flex justify-content-center">
-            {{ $occupancies->links() }}
+            {{ $paginatedOccupancies->links() }}
         </div>
     </div>
 

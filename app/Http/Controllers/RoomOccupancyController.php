@@ -15,119 +15,160 @@ class RoomOccupancyController extends Controller
 {
     public function index(Request $request)
     {
-        // base query
-        $occupancyQuery = RoomOccupancy::with('room','consumer')
-            ->where('status', '!=', 'tidak aktif')
-            ->orderBy('room_id')
-            ->orderBy('id');
-
-        // search by room number or tenant name
-        if ($request->filled('q')) {
-            $q = $request->get('q');
-            $occupancyQuery->where(function($wrap) use ($q) {
-                $wrap->whereHas('room', function($sub) use ($q) {
-                        $sub->where('nomor_kamar', 'like', "%{$q}%");
-                    })
-                    ->orWhereHas('consumer', function($sub) use ($q) {
-                        $sub->where('nama', 'like', "%{$q}%");
-                    });
-            });
-        }
-
-        // paginate occupancies (show many cards per page)
-        $occupancies = $occupancyQuery->paginate(50)->withQueryString();
-
-        // list available rooms (not occupied)
-        $availableRoomsQuery = Room::where('status', 'tersedia')->orderBy('nomor_kamar');
-        if ($request->filled('q')) {
-            $q = $request->get('q');
-            $availableRoomsQuery->where(function($sub) use ($q) {
-                $sub->where('nomor_kamar', 'like', "%{$q}%")
-                    ->orWhere('jenis_kamar', 'like', "%{$q}%");
-            });
-        }
-        $availableRooms = $availableRoomsQuery->get();
-
         $today = Carbon::today();
 
-        foreach ($occupancies as $occ) {
-            // normalize tanggal_keluar
-            if (empty($occ->tanggal_keluar)) {
-                $occ->days_remaining = null;
-                continue;
-            }
+        // Get all rooms ordered by ID (without search filter at this level)
+        $allRooms = Room::orderBy('id')->get();
 
-            $tglKeluar = Carbon::parse($occ->tanggal_keluar);
-            $occ->days_remaining = $tglKeluar->isPast() ? 0 : Carbon::today()->diffInDays($tglKeluar);
+        // Build full occupancy list with all data
+        $occupancies = [];
+        $availableRooms = [];
 
-            // If checkout date has passed -> mark occupancy tidak aktif and set room available
-            if ($tglKeluar->lt($today)) {
-                if ($occ->status !== 'tidak aktif') {
-                    $occ->update(['status' => 'tidak aktif']);
-                }
-
-                if ($occ->room && $occ->room->status !== 'tersedia') {
-                    $occ->room->update(['status' => 'tersedia']);
-                }
-
-                // flag for view
-                $occ->expired = true;
-                continue;
-            }
-
-            // if within 5 days until checkout mark due_soon (yellow) and due_soon_unpaid when unpaid exists
-            $daysUntil = $today->diffInDays($tglKeluar);
-            if ($daysUntil <= 5) {
-                $occ->due_soon = true;
-
-                $hasUnpaid = Billing::where('room_id', $occ->room_id)
-                    ->where('consumer_id', $occ->consumer_id)
-                    ->whereIn('status', ['pending', 'sebagian'])
-                    ->exists();
-
-                if ($hasUnpaid) {
-                    $occ->due_soon_unpaid = true;
-                }
-            }
-
-            // attach latest billing (prefer unpaid/partial)
-            $billing = Billing::where('room_id', $occ->room_id)
-                ->where('consumer_id', $occ->consumer_id)
-                ->whereIn('status', ['pending', 'sebagian'])
-                ->orderByDesc('id')
+        foreach ($allRooms as $room) {
+            // Get active occupancy for this room
+            $occ = RoomOccupancy::with('consumer')
+                ->where('room_id', $room->id)
+                ->where('status', '!=', 'tidak aktif')
                 ->first();
 
-            if (!$billing) {
+            if ($occ) {
+                // Handle occupancy
+                if (empty($occ->tanggal_keluar)) {
+                    $occ->days_remaining = null;
+                } else {
+                    $tglKeluar = Carbon::parse($occ->tanggal_keluar);
+                    $occ->days_remaining = $tglKeluar->isPast() ? 0 : $today->diffInDays($tglKeluar);
+
+                    if ($tglKeluar->lt($today)) {
+                        $occ->update(['status' => 'tidak aktif']);
+                        $room->update(['status' => 'tersedia']);
+                        $availableRooms[] = $room;
+                        continue;
+                    }
+
+                    // Check if within 5 days
+                    $daysUntil = $today->diffInDays($tglKeluar);
+                    if ($daysUntil <= 5) {
+                        $occ->due_soon = true;
+
+                        $hasUnpaid = Billing::where('room_id', $occ->room_id)
+                            ->where('consumer_id', $occ->consumer_id)
+                            ->whereIn('status', ['pending', 'sebagian'])
+                            ->exists();
+
+                        if ($hasUnpaid) {
+                            $occ->due_soon_unpaid = true;
+                        }
+                    }
+                }
+
+                // Attach room relation
+                $occ->room = $room;
+
+                // Attach billing info
                 $billing = Billing::where('room_id', $occ->room_id)
                     ->where('consumer_id', $occ->consumer_id)
+                    ->whereIn('status', ['pending', 'sebagian'])
                     ->orderByDesc('id')
                     ->first();
-            }
 
-            if ($billing) {
-                $occ->billing_id = $billing->id;
-                $occ->billing_url = route('payments.create', ['billing' => $billing->id]);
-                $occ->billing_status = $billing->status;
-                $occ->billing_invoice = $billing->invoice_number;
-                $occ->billing_total = $billing->total_tagihan;
-                
-                // Calculate remaining amount
-                $totalPaid = \App\Models\Payment::where('billing_id', $billing->id)->sum('jumlah');
-                $occ->billing_remaining = $billing->total_tagihan - $totalPaid;
+                if (!$billing) {
+                    $billing = Billing::where('room_id', $occ->room_id)
+                        ->where('consumer_id', $occ->consumer_id)
+                        ->orderByDesc('id')
+                        ->first();
+                }
+
+                if ($billing) {
+                    $occ->billing_id = $billing->id;
+                    $occ->billing_url = route('payments.create', ['billing' => $billing->id]);
+                    $occ->billing_status = $billing->status;
+                    $occ->billing_invoice = $billing->invoice_number;
+                    $occ->billing_total = $billing->total_tagihan;
+                    
+                    $totalPaid = \App\Models\Payment::where('billing_id', $billing->id)->sum('jumlah');
+                    $occ->billing_remaining = $billing->total_tagihan - $totalPaid;
+                }
+
+                $occupancies[] = $occ;
             } else {
-                $occ->billing_id = null;
-                $occ->billing_url = null;
-                $occ->billing_status = null;
-                $occ->billing_invoice = null;
-                $occ->billing_total = null;
-                $occ->billing_remaining = null;
+                // Room is available
+                if ($room->status === 'tersedia') {
+                    $availableRooms[] = $room;
+                }
             }
-
-            // complete/finish url (to edit occupancy) when needed
-            $occ->complete_url = route('occupancies.complete', $occ);
         }
 
-        return view('occupancies.index', compact('occupancies', 'availableRooms'));
+        // Combine occupied and available rooms, ordered by room ID
+        $allRoomsList = [];
+        
+        // Create lookup for occupancies
+        $occupancyByRoomId = [];
+        foreach ($occupancies as $occ) {
+            $occupancyByRoomId[$occ->room_id] = $occ;
+        }
+        
+        // Iterate through all rooms in order and build combined list
+        foreach ($allRooms as $room) {
+            if (isset($occupancyByRoomId[$room->id])) {
+                $allRoomsList[] = $occupancyByRoomId[$room->id];
+            } else if ($room->status === 'tersedia') {
+                // Create a pseudo-occupancy object for available rooms
+                $available = (object) [
+                    'id' => null,
+                    'room_id' => $room->id,
+                    'room' => $room,
+                    'consumer' => null,
+                    'status' => 'available',
+                    'tanggal_masuk' => null,
+                    'tanggal_keluar' => null,
+                ];
+                $allRoomsList[] = $available;
+            }
+        }
+
+        // Apply search filter to combined list
+        if ($request->filled('q')) {
+            $q = $request->get('q');
+            $allRoomsList = array_filter($allRoomsList, function($item) use ($q) {
+                if ($item->status === 'available') {
+                    return (stripos($item->room->nomor_kamar, $q) !== false ||
+                            stripos($item->room->jenis_kamar, $q) !== false);
+                } else {
+                    return (stripos($item->room->nomor_kamar, $q) !== false ||
+                            stripos($item->consumer->nama ?? '', $q) !== false);
+                }
+            });
+            $allRoomsList = array_values($allRoomsList);
+        }
+
+        // Convert to paginated collection
+        $page = request()->get('page', 1);
+        $perPage = (int)request()->get('per_page', 50);
+        $offset = ($page - 1) * $perPage;
+        $paginatedOccupancies = new \Illuminate\Pagination\LengthAwarePaginator(
+            array_slice($allRoomsList, $offset, $perPage),
+            count($allRoomsList),
+            $perPage,
+            $page,
+            [
+                'path' => route('occupancies.index'),
+                'query' => $request->query(),
+            ]
+        );
+        
+        // Separate for view (occupied vs available from paginated list)
+        $occupancies = [];
+        $availableRooms = [];
+        foreach ($paginatedOccupancies as $item) {
+            if ($item->status === 'available') {
+                $availableRooms[] = $item->room;
+            } else {
+                $occupancies[] = $item;
+            }
+        }
+        
+        return view('occupancies.index', compact('paginatedOccupancies', 'occupancies', 'availableRooms'));
     }
 
     public function create(Request $request)
