@@ -9,11 +9,14 @@
 @section('content')
     <style>
         .seat-map-container {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-color: #2b333bff; /* dark slate */
             border-radius: 15px;
             padding: 25px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            box-shadow: 0 10px 40px rgba(66, 55, 55, 0.45);
         }
+
+
+
 
         .cinema-screen {
             background: linear-gradient(to bottom, #1a1a2e 0%, #16213e 100%);
@@ -194,33 +197,6 @@
         .legend-box.soon { background: linear-gradient(135deg, #f8c146, #f0ad4e); }
         .legend-box.expired { background: linear-gradient(135deg, #6c757d, #495057); }
 
-        .search-bar {
-            background: rgba(255,255,255,0.15);
-            backdrop-filter: blur(10px);
-            border-radius: 10px;
-            padding: 10px;
-            margin-bottom: 20px;
-        }
-
-        .search-form {
-            max-width: 460px;
-            width: 100%;
-            margin: 0 auto;
-        }
-
-        .search-input {
-            background: rgba(255,255,255,0.9);
-            border: none;
-            border-radius: 8px;
-            padding: 7px 10px;
-            width: 100%;
-        }
-
-        .search-form .btn {
-            padding: 7px 11px;
-            font-size: 13px;
-        }
-
         .stats-row {
             display: flex;
             gap: 12px;
@@ -387,6 +363,69 @@
                 font-size: 9px;
             }
         }
+
+
+        .search-bar {
+    background-color: #4b5258;
+    padding: 10px 22px;
+    border-radius: 16px;
+    margin-bottom: 18px;
+}
+
+.search-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* BARIS ATAS */
+.search-main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.search-input {
+    flex: 1;
+    border-radius: 12px;
+    height: 42px;
+}
+
+/* GRUP TOMBOL */
+.search-actions {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.search-actions .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    height: 40px;          /* SAMA dengan input */
+    line-height: 40px;     /* INI KUNCINYA */
+    padding: 0 16px;
+
+    border-radius: 10px;
+    white-space: nowrap;
+}
+
+
+/* BARIS BAWAH */
+.search-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #e5e7eb;
+}
+
+.search-footer select {
+    width: 70px;
+    border-radius: 8px;
+}
+
     </style>
 
     <div class="seat-map-container">
@@ -396,26 +435,41 @@
         </div>
 
         <!-- Search & Stats -->
-        <div class="search-bar">
-            <form method="GET" action="{{ route('occupancies.index') }}" class="search-form">
-                <div class="d-flex gap-2 mb-2">
-                    <input type="text" name="q" value="{{ request('q') }}" class="search-input" placeholder="🔍 Cari nomor kamar atau nama penyewa...">
-                    <button class="btn btn-light" type="submit">Cari</button>
-                    @if(request('q'))
-                        <a href="{{ route('occupancies.index') }}" class="btn btn-secondary">Reset</a>
-                    @endif
-                    <a href="{{ route('occupancies.create') }}" class="btn btn-success">+ Tambah</a>
-                </div>
-                <div class="d-flex gap-2 align-items-center" style="justify-content: center;">
-                    <label for="per_page" style="color: #fff; font-size: 12px; margin: 0;">Tampilkan per halaman:</label>
-                    <select name="per_page" id="per_page" class="form-control" style="width: 80px; padding: 5px; font-size: 12px;" onchange="this.form.submit()">
-                        <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
-                        <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
-                        <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>150</option>
-                    </select>
-                </div>
-            </form>
+<div class="search-bar">
+    <form method="GET" action="{{ route('occupancies.index') }}" class="search-form">
+
+        <!-- BARIS UTAMA -->
+        <div class="search-main">
+            <input
+                type="text"
+                name="q"
+                value="{{ request('q') }}"
+                class="form-control search-input"
+                placeholder="Cari nomor kamar atau nama penyewa"
+            >
+
+            <div class="search-actions">
+                <button type="submit" class="btn btn-primary">Cari</button>
+
+                <a href="{{ route('occupancies.create') }}" class="btn btn-success">
+                    + Tambah
+                </a>
+            </div>
+            <span  class="search-footer">Per halaman</span>
+            <select
+                name="per_page"
+                class="form-select form-select-sm"
+                onchange="this.form.submit()"
+            >
+                <option value="50" {{ request('per_page', 50) == 50 ? 'selected' : '' }}>50</option>
+                <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
+                <option value="150" {{ request('per_page') == 150 ? 'selected' : '' }}>150</option>
+            </select>
         </div>
+
+    </form>
+</div>
+
 
         <!-- Statistics -->
         @php
