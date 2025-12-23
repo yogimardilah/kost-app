@@ -67,7 +67,7 @@
                 <div class="info-box">
                     <span class="info-box-icon bg-danger"><i class="fas fa-exclamation-circle"></i></span>
                     <div class="info-box-content">
-                        <span class="info-box-text">Sisa Tagihan</span>
+                        <span class="info-box-text">Selisih Tagihan</span>
                         <span class="info-box-number">Rp {{ number_format($outstanding ?? 0,0,',','.') }}</span>
                     </div>
                 </div>

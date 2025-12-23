@@ -6,6 +6,7 @@ use App\Models\RoomOccupancy;
 use App\Models\Billing;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use App\Services\ReportService;
 
 class ReportController extends Controller
 {
@@ -45,76 +46,13 @@ class ReportController extends Controller
         
         // Export to Excel
         if ($request->has('export') && $request->export == 'excel') {
-            return $this->exportOccupancyExcel($query->get());
+            return ReportService::exportOccupancyExcel($query->get());
         }
-        
+
         $occupancies = $query->paginate(20)->withQueryString();
         
         return view('reports.occupancy', compact('occupancies'));
     }
-    
-    private function exportOccupancyExcel($occupancies)
-    {
-        $filename = 'laporan-hunian-' . date('Y-m-d') . '.xls';
-        
-        $headers = [
-            'Content-Type' => 'application/vnd.ms-excel',
-            'Content-Disposition' => "attachment; filename={$filename}",
-            'Pragma' => 'no-cache',
-            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
-            'Expires' => '0',
-        ];
-        
-        $callback = function() use ($occupancies) {
-            echo '<html xmlns:x="urn:schemas-microsoft-com:office:excel">';
-            echo '<head>';
-            echo '<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />';
-            echo '<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>';
-            echo '<x:Name>Laporan Hunian</x:Name>';
-            echo '<x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet>';
-            echo '</x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->';
-            echo '</head>';
-            echo '<body>';
-            echo '<table border="1">';
-            echo '<thead>';
-            echo '<tr style="background-color: #4CAF50; color: white; font-weight: bold;">';
-            echo '<th>No</th>';
-            echo '<th>Nomor Kamar</th>';
-            echo '<th>Penyewa</th>';
-            echo '<th>NIK</th>';
-            echo '<th>Check-in</th>';
-            echo '<th>Check-out</th>';
-            echo '<th>Status</th>';
-            echo '</tr>';
-            echo '</thead>';
-            echo '<tbody>';
-            
-            foreach ($occupancies as $i => $o) {
-                $nik = $o->consumer->nik ?? '-';
-                $checkIn = $o->tanggal_masuk ? \Carbon\Carbon::parse($o->tanggal_masuk)->format('d/m/Y') : '-';
-                $checkOut = $o->tanggal_keluar ? \Carbon\Carbon::parse($o->tanggal_keluar)->format('d/m/Y') : '-';
-                
-                echo '<tr>';
-                echo '<td>' . ($i + 1) . '</td>';
-                echo '<td>' . ($o->room->nomor_kamar ?? '-') . '</td>';
-                echo '<td>' . ($o->consumer->nama ?? '-') . '</td>';
-                echo '<td style="mso-number-format:\'\@\';">' . $nik . '</td>'; // Format as text to preserve leading zeros
-                echo '<td>' . $checkIn . '</td>';
-                echo '<td>' . $checkOut . '</td>';
-                echo '<td>' . ucfirst($o->status) . '</td>';
-                echo '</tr>';
-            }
-            
-            echo '</tbody>';
-            echo '</table>';
-            echo '</body>';
-            echo '</html>';
-        };
-        
-        return response()->stream($callback, 200, $headers);
-    }
-
-    
 
     /**
      * Finance report with search, filters, pagination and export.

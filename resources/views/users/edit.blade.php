@@ -40,6 +40,20 @@
                     @error('role_id') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
                 </div>
 
+                <hr>
+                <p class="text-muted"><small>Kosongkan jika tidak ingin mengubah password</small></p>
+
+                <div class="form-group mb-3">
+                    <label for="password">Password Baru</label>
+                    <input type="password" name="password" id="password" class="form-control @error('password') is-invalid @enderror">
+                    @error('password') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="password_confirmation">Konfirmasi Password Baru</label>
+                    <input type="password" name="password_confirmation" id="password_confirmation" class="form-control">
+                </div>
+
                 <div class="form-group">
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save"></i> Simpan
