@@ -75,9 +75,11 @@ class RoomOccupancyController extends Controller
                 continue;
             }
 
-            // if within 5 days until checkout and there are unpaid billings -> mark due_soon_unpaid
+            // if within 5 days until checkout mark due_soon (yellow) and due_soon_unpaid when unpaid exists
             $daysUntil = $today->diffInDays($tglKeluar);
             if ($daysUntil <= 5) {
+                $occ->due_soon = true;
+
                 $hasUnpaid = Billing::where('room_id', $occ->room_id)
                     ->where('consumer_id', $occ->consumer_id)
                     ->whereIn('status', ['pending', 'sebagian'])

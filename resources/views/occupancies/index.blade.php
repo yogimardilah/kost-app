@@ -64,6 +64,7 @@
         .seat-card.available::before { color: #28a745; }
         .seat-card.occupied::before { color: #007bff; }
         .seat-card.warning::before { color: #dc3545; }
+        .seat-card.soon::before { color: #f0ad4e; }
         .seat-card.expired::before { color: #6c757d; }
 
         .seat-header {
@@ -87,6 +88,10 @@
 
         .seat-header.warning {
             background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+
+        .seat-header.soon {
+            background: linear-gradient(135deg, #f8c146 0%, #f0ad4e 100%);
         }
 
         .seat-header.expired {
@@ -275,6 +280,7 @@
         .seat-modal-header.available { background: linear-gradient(135deg, #28a745, #20c997); }
         .seat-modal-header.occupied { background: linear-gradient(135deg, #007bff, #0056b3); }
         .seat-modal-header.warning { background: linear-gradient(135deg, #dc3545, #c82333); }
+        .seat-modal-header.soon { background: linear-gradient(135deg, #f8c146, #f0ad4e); }
         .seat-modal-header.expired { background: linear-gradient(135deg, #6c757d, #495057); }
 
         .seat-modal-title {
@@ -428,7 +434,7 @@
             </div>
             <div class="legend-item">
                 <div class="legend-box warning"></div>
-                <span>Belum Bayar</span>
+                <span>Belum Bayar H - 5 Checkout</span>
             </div>
             <div class="legend-item">
                 <div class="legend-box expired"></div>
@@ -446,8 +452,13 @@
             @foreach($occupancies as $occ)
                 @php
                     $cardClass = 'occupied';
-                    if (!empty($occ->expired)) $cardClass = 'expired';
-                    elseif (!empty($occ->due_soon_unpaid)) $cardClass = 'warning';
+                    if (!empty($occ->expired)) {
+                        $cardClass = 'expired';
+                    } elseif (!empty($occ->due_soon_unpaid)) {
+                        $cardClass = 'warning';
+                    } elseif (!empty($occ->due_soon)) {
+                        $cardClass = 'soon';
+                    }
                 @endphp
 
                 <div class="seat-card {{ $cardClass }}" onclick="openSeatModal(this)" 
@@ -569,6 +580,7 @@
                 document.getElementById('modalAdd').href = data.addUrl;
                 document.getElementById('modalEdit').style.display = 'none';
                 document.getElementById('modalBilling').style.display = 'none';
+                document.getElementById('modalWhatsApp').style.display = 'none';
                 document.getElementById('modalComplete').style.display = 'none';
             } else {
                 bodyHTML = `
@@ -587,19 +599,23 @@
                 document.getElementById('modalEdit').href = data.editUrl;
                 
                 const paid = (data.billingStatus || '').toLowerCase() === 'lunas';
+                const phoneRaw = data.consumerPhone || '';
+                const phone = phoneRaw ? phoneRaw.replace(/^0/, '62').replace(/[^0-9]/g, '') : '';
+
                 if (!paid && data.billingUrl) {
                     document.getElementById('modalBilling').style.display = '';
                     document.getElementById('modalBilling').href = data.billingUrl;
                     
                     // Show WhatsApp button if unpaid billing exists and consumer has phone
-                    if (data.consumerPhone && data.billingInvoice && data.billingRemaining) {
-                        const phone = data.consumerPhone.replace(/^0/, '62').replace(/[^0-9]/g, '');
+                    if (phone && data.billingInvoice && data.billingRemaining) {
+                        const daysInfo = data.days ? `Checkout dalam ${data.days} hari.\n` : '';
                         const message = encodeURIComponent(
-                            `Halo ${data.tenant},\\n\\n` +
-                            `Informasi tagihan kost Anda:\\n` +
-                            `Invoice: ${data.billingInvoice}\\n` +
-                            `Total Tagihan: Rp ${parseFloat(data.billingTotal || 0).toLocaleString('id-ID')}\\n` +
-                            `Sisa Tagihan: Rp ${parseFloat(data.billingRemaining || 0).toLocaleString('id-ID')}\\n\\n` +
+                            `Halo ${data.tenant},\n\n` +
+                            `Informasi tagihan kost Anda:\n` +
+                            `Invoice: ${data.billingInvoice}\n` +
+                            `Total Tagihan: Rp ${parseFloat(data.billingTotal || 0).toLocaleString('id-ID')}\n` +
+                            `Sisa Tagihan: Rp ${parseFloat(data.billingRemaining || 0).toLocaleString('id-ID')}\n` +
+                            `${daysInfo}\n` +
                             `Mohon segera melakukan pembayaran. Terima kasih.`
                         );
                         const waUrl = `https://wa.me/${phone}?text=${message}`;
@@ -610,7 +626,23 @@
                     }
                 } else {
                     document.getElementById('modalBilling').style.display = 'none';
-                    document.getElementById('modalWhatsApp').style.display = 'none';
+
+                    // If sudah lunas atau tidak ada tagihan: kirim ajakan booking/perpanjang
+                    if (phone) {
+                        const statusInfo = paid ? 'sudah lunas' : 'sedang tidak ada tagihan aktif';
+                        const daysInfo = data.days ? `Checkout dalam ${data.days} hari.` : '';
+                        const message = encodeURIComponent(
+                            `Halo ${data.tenant},\n\n` +
+                            `Status tagihan Anda ${statusInfo}. ${daysInfo} Jika ingin booking/perpanjang untuk periode berikutnya (bulanan atau harian), silakan konfirmasi.\n` +
+                            `Kamar: ${data.room || '-'}\n` +
+                            `Terima kasih.`
+                        );
+                        const waUrl = `https://wa.me/${phone}?text=${message}`;
+                        document.getElementById('modalWhatsApp').style.display = '';
+                        document.getElementById('modalWhatsApp').href = waUrl;
+                    } else {
+                        document.getElementById('modalWhatsApp').style.display = 'none';
+                    }
                 }
                 
                 if (paid && data.completeUrl) {
