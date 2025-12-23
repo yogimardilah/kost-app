@@ -22,7 +22,7 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
+    return redirect()->route('occupancies.index');
 })->middleware(['auth'])->name('dashboard');
 
 Route::get('/debug-menu', function () {
