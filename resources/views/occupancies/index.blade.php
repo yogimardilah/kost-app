@@ -3,7 +3,7 @@
 @section('title', 'Seat Map - Kamar Kost')
 
 @section('content_header')
-    <h1>Seat Map - Status Kamar</h1>
+    <!-- <h1>Seat Map - Status Kamar</h1> -->
 @endsection
 
 @section('content')
@@ -30,9 +30,9 @@
 
         .seat-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 10px;
-            margin-top: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 8px;
+            margin-top: 16px;
         }
 
         .seat-card {
@@ -43,7 +43,7 @@
             transition: all 0.3s ease;
             box-shadow: 0 3px 10px rgba(0,0,0,0.1);
             position: relative;
-            height: 100px;
+            height: 78px;
         }
 
         .seat-card:hover {
@@ -68,10 +68,10 @@
         .seat-card.expired::before { color: #6c757d; }
 
         .seat-header {
-            padding: 12px 10px;
+            padding: 10px 8px;
             color: #fff;
             position: relative;
-            height: 100px;
+            height: 78px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -99,31 +99,31 @@
         }
 
         .seat-number {
-            font-size: 28px;
+            font-size: 22px;
             font-weight: 900;
-            margin-bottom: 3px;
+            margin-bottom: 2px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
             text-align: center;
         }
 
         .seat-tenant {
-            font-size: 10px;
+            font-size: 9px;
             opacity: 0.85;
             font-weight: 500;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 80px;
+            max-width: 70px;
             text-align: center;
         }
 
         .seat-badge {
             position: absolute;
-            top: 5px;
-            right: 5px;
-            padding: 2px 6px;
-            border-radius: 10px;
-            font-size: 8px;
+            top: 4px;
+            right: 4px;
+            padding: 2px 5px;
+            border-radius: 9px;
+            font-size: 7px;
             font-weight: 700;
             background: rgba(255,255,255,0.3);
             backdrop-filter: blur(10px);
@@ -162,79 +162,91 @@
 
         .legend-container {
             display: flex;
-            gap: 20px;
+            gap: 14px;
             justify-content: center;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             flex-wrap: wrap;
         }
 
         .legend-item {
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 8px 15px;
+            gap: 6px;
+            padding: 6px 12px;
             background: rgba(255,255,255,0.2);
-            border-radius: 20px;
+            border-radius: 18px;
             backdrop-filter: blur(10px);
             color: #fff;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
         }
 
         .legend-box {
-            width: 24px;
-            height: 24px;
-            border-radius: 6px;
+            width: 20px;
+            height: 20px;
+            border-radius: 5px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
 
         .legend-box.available { background: linear-gradient(135deg, #28a745, #20c997); }
         .legend-box.occupied { background: linear-gradient(135deg, #007bff, #0056b3); }
         .legend-box.warning { background: linear-gradient(135deg, #dc3545, #c82333); }
+        .legend-box.soon { background: linear-gradient(135deg, #f8c146, #f0ad4e); }
         .legend-box.expired { background: linear-gradient(135deg, #6c757d, #495057); }
 
         .search-bar {
             background: rgba(255,255,255,0.15);
             backdrop-filter: blur(10px);
             border-radius: 10px;
-            padding: 15px;
+            padding: 10px;
             margin-bottom: 20px;
+        }
+
+        .search-form {
+            max-width: 460px;
+            width: 100%;
+            margin: 0 auto;
         }
 
         .search-input {
             background: rgba(255,255,255,0.9);
             border: none;
             border-radius: 8px;
-            padding: 10px 15px;
+            padding: 7px 10px;
             width: 100%;
+        }
+
+        .search-form .btn {
+            padding: 7px 11px;
+            font-size: 13px;
         }
 
         .stats-row {
             display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: 12px;
+            margin-bottom: 16px;
             flex-wrap: wrap;
         }
 
         .stat-box {
             flex: 1;
-            min-width: 150px;
+            min-width: 130px;
             background: rgba(255,255,255,0.2);
             backdrop-filter: blur(10px);
-            border-radius: 10px;
-            padding: 15px;
+            border-radius: 8px;
+            padding: 12px;
             color: #fff;
             text-align: center;
         }
 
         .stat-number {
-            font-size: 32px;
+            font-size: 26px;
             font-weight: 900;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
         }
 
         .stat-label {
-            font-size: 13px;
+            font-size: 12px;
             opacity: 0.9;
         }
 
@@ -385,7 +397,7 @@
 
         <!-- Search & Stats -->
         <div class="search-bar">
-            <form method="GET" action="{{ route('occupancies.index') }}" class="d-flex gap-2">
+            <form method="GET" action="{{ route('occupancies.index') }}" class="search-form d-flex gap-2">
                 <input type="text" name="q" value="{{ request('q') }}" class="search-input" placeholder="🔍 Cari nomor kamar atau nama penyewa...">
                 <button class="btn btn-light" type="submit">Cari</button>
                 @if(request('q'))
@@ -437,9 +449,13 @@
                 <span>Belum Bayar H - 5 Checkout</span>
             </div>
             <div class="legend-item">
+                <div class="legend-box soon"></div>
+                <span>H - 5 Checkout (Lunas)</span>
+            </div>
+            <!-- <div class="legend-item">
                 <div class="legend-box expired"></div>
                 <span>Tidak Aktif</span>
-            </div>
+            </div> -->
         </div>
 
         @if(session('success'))
