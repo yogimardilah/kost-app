@@ -34,6 +34,14 @@ class AddonTransactionController extends Controller
             $query->where('status', $request->status);
         }
 
+        // Optional date range filter on billing creation date
+        if ($request->filled('start_date')) {
+            $query->whereDate('created_at', '>=', $request->start_date);
+        }
+        if ($request->filled('end_date')) {
+            $query->whereDate('created_at', '<=', $request->end_date);
+        }
+
         $billings = $query->paginate(15)->withQueryString();
 
         // Precompute paid/remaining for the page to avoid N+1

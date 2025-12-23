@@ -9,6 +9,19 @@
 @section('content')
 <div class="card">
     <div class="card-body">
+        <form class="form-inline mb-3" method="GET">
+            <input type="text" name="search" value="{{ request('search') }}" class="form-control mr-2" placeholder="Cari invoice/penyewa">
+            <select name="status" class="form-control mr-2">
+                <option value="">Semua Status</option>
+                <option value="pending" {{ request('status')=='pending' ? 'selected' : '' }}>Pending</option>
+                <option value="sebagian" {{ request('status')=='sebagian' ? 'selected' : '' }}>Sebagian</option>
+                <option value="lunas" {{ request('status')=='lunas' ? 'selected' : '' }}>Lunas</option>
+            </select>
+            <input type="date" name="start_date" value="{{ request('start_date') }}" class="form-control mr-2">
+            <input type="date" name="end_date" value="{{ request('end_date') }}" class="form-control mr-2">
+            <button class="btn btn-primary">Filter</button>
+        </form>
+
         <div class="mb-3">
             <a href="{{ route('billings.reminders') }}" class="btn btn-warning">
                 <i class="fas fa-bell"></i> Lihat Reminder (@php echo \App\Models\BillingReminder::where('is_sent', false)->count() @endphp)
@@ -36,7 +49,7 @@
                         $reminder = \App\Models\BillingReminder::where('billing_id', $b->id)->where('is_sent', false)->first();
                     @endphp
                     <tr>
-                        <td>{{ $i + 1 }}</td>
+                        <td>{{ $billings->firstItem() + $i }}</td>
                         <td>
                             <a href="{{ route('billings.show', $b) }}">{{ $b->invoice_number }}</a>
                             @if($reminder)
@@ -62,6 +75,10 @@
                     @endforeach
                 </tbody>
             </table>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>Menampilkan {{ $billings->firstItem() }} - {{ $billings->lastItem() }} dari {{ $billings->total() }}</div>
+                <div>{{ $billings->links() }}</div>
+            </div>
         @endif
     </div>
 </div>

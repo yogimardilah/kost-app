@@ -33,6 +33,8 @@
                 <option value="sebagian" {{ request('status')=='sebagian' ? 'selected' : '' }}>Sebagian</option>
                 <option value="lunas" {{ request('status')=='lunas' ? 'selected' : '' }}>Lunas</option>
             </select>
+            <input type="date" name="start_date" value="{{ request('start_date') }}" class="form-control mr-2" placeholder="Mulai">
+            <input type="date" name="end_date" value="{{ request('end_date') }}" class="form-control mr-2" placeholder="Selesai">
             <button class="btn btn-primary">Filter</button>
             <a href="{{ route('addon-transactions.create') }}" class="btn btn-success ml-2">Tambah Addon ke Billing</a>
         </form>
@@ -44,6 +46,7 @@
                     <tr>
                         <th>No</th>
                         <th>Invoice</th>
+                        <th>Tanggal</th>
                         <th>Penyewa</th>
                         <th>Kamar</th>
                         <th>Status</th>
@@ -58,6 +61,7 @@
                     <tr>
                         <td>{{ $billings->firstItem() + $i }}</td>
                         <td>{{ $b->invoice_number }}</td>
+                        <td>{{ $b->created_at ? $b->created_at->format('d/m/Y') : '-' }}</td>
                         <td>{{ $b->consumer->nama ?? '-' }}</td>
                         <td>{{ $b->room->nomor_kamar ?? '-' }}</td>
                         <td>

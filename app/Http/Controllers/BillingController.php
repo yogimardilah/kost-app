@@ -10,7 +10,30 @@ class BillingController extends Controller
 {
     public function index()
     {
-        $billings = Billing::with('room','consumer')->orderBy('id','desc')->get();
+        $query = Billing::with(['room','consumer'])->orderByDesc('created_at');
+
+        if (request()->filled('search')) {
+            $s = request('search');
+            $query->where(function ($q) use ($s) {
+                $q->where('invoice_number', 'like', "%{$s}%")
+                    ->orWhereHas('consumer', function ($c) use ($s) {
+                        $c->where('nama', 'like', "%{$s}%");
+                    });
+            });
+        }
+
+        if (request()->filled('status')) {
+            $query->where('status', request('status'));
+        }
+
+        if (request()->filled('start_date')) {
+            $query->whereDate('created_at', '>=', request('start_date'));
+        }
+        if (request()->filled('end_date')) {
+            $query->whereDate('created_at', '<=', request('end_date'));
+        }
+
+        $billings = $query->paginate(15)->withQueryString();
         return view('billings.index', compact('billings'));
     }
 

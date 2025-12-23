@@ -11,7 +11,31 @@ class PaymentController extends Controller
 {
     public function index()
     {
-        $payments = Payment::with('billing')->orderBy('id','desc')->get();
+        $query = Payment::with(['billing.consumer'])
+            ->orderByDesc('tanggal_bayar')
+            ->orderByDesc('id');
+
+        if (request()->filled('search')) {
+            $s = request('search');
+            $query->where(function ($q) use ($s) {
+                $q->whereHas('billing', function ($b) use ($s) {
+                    $b->where('invoice_number', 'like', "%{$s}%")
+                        ->orWhereHas('consumer', function ($c) use ($s) {
+                            $c->where('nama', 'like', "%{$s}%");
+                        });
+                })
+                ->orWhere('metode', 'like', "%{$s}%");
+            });
+        }
+
+        if (request()->filled('start_date')) {
+            $query->whereDate('tanggal_bayar', '>=', request('start_date'));
+        }
+        if (request()->filled('end_date')) {
+            $query->whereDate('tanggal_bayar', '<=', request('end_date'));
+        }
+
+        $payments = $query->paginate(15)->withQueryString();
         return view('payments.index', compact('payments'));
     }
 
