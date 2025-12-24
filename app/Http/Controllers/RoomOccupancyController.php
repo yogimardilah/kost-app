@@ -6,6 +6,8 @@ use App\Models\RoomOccupancy;
 use App\Models\Room;
 use App\Models\Consumer;
 use App\Models\Billing;
+use App\Models\BillingDetail;
+use App\Models\Payment;
 use App\Http\Requests\StoreRoomOccupancyRequest;
 use App\Http\Requests\UpdateRoomOccupancyRequest;
 use Carbon\Carbon;
@@ -92,6 +94,8 @@ class RoomOccupancyController extends Controller
 
                 // Always set complete URL - button will show when billing is paid/none
                 $occ->complete_url = route('occupancies.complete', $occ->id);
+                // Upgrade URL for owner-only action
+                $occ->upgrade_url = route('occupancies.upgrade', $occ->id);
 
                 $occupancies[] = $occ;
             } else {
@@ -239,18 +243,158 @@ class RoomOccupancyController extends Controller
         }
 
         $data = $request->validated();
+
+        // Prevent room change via general edit; use dedicated upgrade flow
+        if ($data['room_id'] != $occupancy->room_id) {
+            return back()->withErrors(['room_id' => 'Ganti kamar lewat menu upgrade, bukan edit.'])->withInput();
+        }
+
         $occupancy->update($data);
 
-        // if status changed or room changed, ensure room statuses adjusted
-        if (isset($data['room_id'])) {
-            // set new room to terisi
-            $newRoom = Room::find($data['room_id']);
-            if ($newRoom) {
-                $newRoom->update(['status' => 'terisi']);
+        return redirect()->route('occupancies.index')->with('success','Data occupancy berhasil diperbarui');
+    }
+
+    public function upgradeForm(RoomOccupancy $occupancy)
+    {
+        // Allow Owner (1) and Admin (2) to access upgrade
+        if (!in_array(auth()->user()->role_id, [1, 2])) {
+            abort(403, 'Anda tidak memiliki akses untuk upgrade kamar');
+        }
+
+        $occupancy->loadMissing('room', 'consumer');
+
+        $billing = Billing::where('room_id', $occupancy->room_id)
+            ->where('consumer_id', $occupancy->consumer_id)
+            ->whereIn('status', ['pending', 'sebagian'])
+            ->orderByDesc('id')
+            ->first();
+
+        if (!$billing) {
+            $billing = Billing::where('room_id', $occupancy->room_id)
+                ->where('consumer_id', $occupancy->consumer_id)
+                ->orderByDesc('id')
+                ->first();
+        }
+
+        $rentType = '-';
+        $billingSummary = null;
+        if ($billing) {
+            if ($billing->periode_awal && $billing->periode_akhir) {
+                $days = max(1, Carbon::parse($billing->periode_awal)->diffInDays(Carbon::parse($billing->periode_akhir)));
+                $rentType = $days < 30 ? 'Harian' : 'Bulanan';
+            }
+            $paid = Payment::where('billing_id', $billing->id)->sum('jumlah');
+            $billingSummary = [
+                'invoice' => $billing->invoice_number,
+                'status' => $billing->status,
+                'total' => $billing->total_tagihan,
+                'paid' => $paid,
+                'remaining' => $billing->total_tagihan - $paid,
+            ];
+        }
+
+        $rooms = Room::where('status', 'tersedia')
+            ->where('id', '!=', $occupancy->room_id)
+            ->orderBy('nomor_kamar')
+            ->get();
+
+        return view('occupancies.upgrade', compact('occupancy', 'rooms', 'billing', 'rentType', 'billingSummary'));
+    }
+
+    public function applyUpgrade(Request $request, RoomOccupancy $occupancy)
+    {
+        // Allow Owner (1) and Admin (2) to perform upgrade
+        if (!in_array(auth()->user()->role_id, [1, 2])) {
+            abort(403, 'Anda tidak memiliki akses untuk upgrade kamar');
+        }
+
+        $data = $request->validate([
+            'room_id' => 'required|exists:rooms,id',
+            'upgrade_from' => 'required|date',
+            'upgrade_to' => 'required|date|after_or_equal:upgrade_from',
+            'rent_type' => 'required|in:Bulanan,Harian',
+        ]);
+
+        $occupancy->loadMissing('room');
+        $oldRoom = $occupancy->room;
+        $newRoom = Room::find($data['room_id']);
+
+        if (!$newRoom || $newRoom->id === $occupancy->room_id) {
+            return back()->withErrors(['room_id' => 'Pilih kamar lain untuk upgrade.']);
+        }
+
+        // adjust billing: no new transaction, add delta to current or latest invoice
+        $billing = Billing::where('consumer_id', $occupancy->consumer_id)
+            ->whereIn('status', ['pending', 'sebagian'])
+            ->latest()
+            ->first();
+
+        if (!$billing) {
+            $billing = Billing::where('consumer_id', $occupancy->consumer_id)
+                ->latest()
+                ->first();
+        }
+
+        if (!$billing) {
+            return back()->withErrors(['room_id' => 'Tidak ada invoice aktif untuk ditambahkan selisih.']);
+        }
+
+        // Use custom date range provided by user
+        $upgradeFrom = Carbon::parse($data['upgrade_from']);
+        $upgradeTo = Carbon::parse($data['upgrade_to']);
+        $days = max(1, $upgradeFrom->diffInDays($upgradeTo));
+
+        // Determine pricing based on current rent type
+        if ($data['rent_type'] === 'Bulanan') {
+            // Always use monthly logic for old room
+            if ($days <= 30) {
+                $oldTotal = $oldRoom->harga ?? 0;
+            } else {
+                $remainingDays = $days - 30;
+                $oldTotal = ($oldRoom->harga ?? 0) + (($oldRoom->harga_harian ?? 0) * $remainingDays);
+            }
+
+            // Determine new room total
+            if ($days <= 30) {
+                $newTotal = $newRoom->harga ?? 0;
+            } else {
+                $remainingDays = $days - 30;
+                $newTotal = ($newRoom->harga ?? 0) + (($newRoom->harga_harian ?? 0) * $remainingDays);
+            }
+        } else {
+            // Harian: always use daily pricing
+            $oldTotal = ($oldRoom->harga_harian ?? 0) * $days;
+            $newTotal = ($newRoom->harga_harian ?? 0) * $days;
+        }
+
+        $delta = $newTotal - $oldTotal;
+
+        if ($delta !== 0) {
+            BillingDetail::create([
+                'billing_id' => $billing->id,
+                'keterangan' => 'Upgrade kamar dari ' . ($oldRoom->nomor_kamar ?? '-') . ' ke ' . ($newRoom->nomor_kamar ?? '-') . ' (' . $upgradeFrom->format('d/m/Y') . ' s/d ' . $upgradeTo->format('d/m/Y') . ')',
+                'qty' => 1,
+                'harga' => $delta,
+                'subtotal' => $delta,
+            ]);
+            $billing->increment('total_tagihan', $delta);
+
+            if ($billing->status === 'lunas') {
+                $billing->status = 'sebagian';
             }
         }
 
-        return redirect()->route('occupancies.index')->with('success','Data occupancy berhasil diperbarui');
+        $billing->room_id = $newRoom->id;
+        $billing->save();
+
+        // update occupancy and room statuses
+        $occupancy->update(['room_id' => $newRoom->id]);
+        $newRoom->update(['status' => 'terisi']);
+        if ($oldRoom) {
+            $oldRoom->update(['status' => 'tersedia']);
+        }
+
+        return redirect()->route('occupancies.index')->with('success', 'Upgrade kamar berhasil, selisih ditagihkan di invoice.');
     }
 
     public function destroy(RoomOccupancy $occupancy)

@@ -35,6 +35,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('rooms', RoomController::class);
     Route::resource('addons', RoomAddonController::class);
     Route::resource('consumers', App\Http\Controllers\ConsumerController::class);
+    Route::get('occupancies/{occupancy}/upgrade', [App\Http\Controllers\RoomOccupancyController::class, 'upgradeForm'])->name('occupancies.upgrade');
+    Route::post('occupancies/{occupancy}/upgrade', [App\Http\Controllers\RoomOccupancyController::class, 'applyUpgrade'])->name('occupancies.apply-upgrade');
     Route::post('occupancies/{occupancy}/complete', [App\Http\Controllers\RoomOccupancyController::class, 'complete'])->name('occupancies.complete');
     Route::resource('occupancies', App\Http\Controllers\RoomOccupancyController::class);
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

@@ -247,8 +247,8 @@
         .seat-modal {
             background: #fff;
             border-radius: 15px;
-            width: 400px;
-            max-width: 90%;
+            width: 600px;
+            max-width: 100%;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             overflow: hidden;
             animation: slideUp 0.3s;
@@ -576,6 +576,7 @@
                          data-consumer-phone="{{ $occ->consumer->no_hp ?? '' }}"
                          data-consumer-id="{{ $occ->consumer->id ?? '' }}"
                          data-complete-url="{{ $occ->complete_url ?? '' }}"
+                         data-upgrade-url="{{ $occ->upgrade_url ?? '' }}"
                          data-room="{{ $occ->room->nomor_kamar ?? '-' }}"
                          data-tenant="{{ $occ->consumer->nama ?? '-' }}"
                          data-status="{{ $occ->status }}"
@@ -620,6 +621,7 @@
                 <a id="modalAdd" class="btn btn-success btn-cinema" href="#" style="display:none;">Tambah Penyewa</a>
                 <a id="modalAddons" class="btn btn-warning btn-cinema" href="#" style="display:none;">Tambah Addons</a>
                 <a id="modalBilling" class="btn btn-info btn-cinema" href="#" style="display:none;">Billing</a>
+                <a id="modalUpgrade" class="btn btn-primary btn-cinema" href="#" style="display:none;">Upgrade Kamar</a>
                 <a id="modalWhatsApp" class="btn btn-success btn-cinema" href="#" target="_blank" style="display:none;">
                     <i class="fab fa-whatsapp"></i> Kirim WA
                 </a>
@@ -646,6 +648,11 @@
 
         function isOwner() {
             return {{ auth()->user()->role_id === 1 ? 'true' : 'false' }};
+        }
+
+        // Owner (1) or Admin (2) can upgrade
+        function isAdminOrOwner() {
+            return {{ in_array(auth()->user()->role_id, [1,2]) ? 'true' : 'false' }};
         }
 
         function openSeatModal(card) {
@@ -700,12 +707,20 @@
                                 
                 document.getElementById('modalAdd').style.display = 'none';
                 
-                // Show Edit button only for owner (role_id = 1)
+                // Edit: only Owner (role_id = 1)
                 if (isOwner()) {
                     document.getElementById('modalEdit').style.display = '';
                     document.getElementById('modalEdit').href = data.editUrl;
                 } else {
                     document.getElementById('modalEdit').style.display = 'none';
+                }
+
+                // Upgrade: Owner (1) and Admin (2)
+                if (isAdminOrOwner() && data.upgradeUrl) {
+                    document.getElementById('modalUpgrade').style.display = '';
+                    document.getElementById('modalUpgrade').href = data.upgradeUrl;
+                } else {
+                    document.getElementById('modalUpgrade').style.display = 'none';
                 }
                 
                 // Show Addons button for occupied rooms
