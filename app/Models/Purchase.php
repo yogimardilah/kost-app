@@ -1,0 +1,36 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class Purchase extends Model
+{
+    use HasFactory, SoftDeletes;
+
+    protected $fillable = [
+        'kost_id',
+        'description',
+        'category',
+        'amount',
+        'purchase_date',
+        'notes',
+        'file_path',
+        'created_by',
+        'updated_by',
+        'deleted_by',
+    ];
+
+    protected $casts = [
+        'purchase_date' => 'date',
+        'amount' => 'decimal:2',
+        'deleted_at' => 'datetime',
+    ];
+
+    public function kost()
+    {
+        return $this->belongsTo(Kost::class);
+    }
+}

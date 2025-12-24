@@ -325,6 +325,7 @@ return [
                 ['text' => 'Billings', 'url' => 'billings', 'icon' => 'fas fa-file-invoice', 'menu_code' => 'billings'],
                 ['text' => 'Payments', 'url' => 'payments', 'icon' => 'fas fa-credit-card', 'menu_code' => 'payments'],
                 ['text' => 'Transaksi Addon', 'url' => 'addon-transactions', 'icon' => 'fas fa-puzzle-piece', 'menu_code' => 'addon_transactions'],
+                ['text' => 'Pembelian/Ops', 'url' => 'purchases', 'icon' => 'fas fa-shopping-cart', 'menu_code' => 'purchases'],
             ],
         ],
         [

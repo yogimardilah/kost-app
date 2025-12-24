@@ -22,6 +22,8 @@ class RolePermissionController extends Controller
             'occupancies' => 'Occupancies',
             'billings' => 'Billings',
             'payments' => 'Payments',
+            'addon_transactions' => 'Transaksi Addon',
+            'purchases' => 'Pembelian/Ops',
             'laporan' => 'Laporan',
             'reports_occupancy' => 'Laporan Hunian',
             'reports_finance' => 'Laporan Keuangan',

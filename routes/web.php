@@ -4,7 +4,8 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\KostController;
 use App\Http\Controllers\RoomController;
-use App\Http\Controllers\RoomAddonController;   
+use App\Http\Controllers\RoomAddonController;
+use App\Http\Controllers\PurchaseController;
 
 /*
 |--------------------------------------------------------------------------
@@ -45,6 +46,10 @@ Route::middleware('auth')->group(function () {
     Route::resource('payments', App\Http\Controllers\PaymentController::class);
     Route::resource('users', App\Http\Controllers\UserController::class);
     Route::resource('roles', App\Http\Controllers\RoleController::class);
+    // Custom routes before resource to avoid clashing with show
+    Route::get('purchases/print', [PurchaseController::class, 'print'])->name('purchases.print');
+    Route::get('purchases/export', [PurchaseController::class, 'export'])->name('purchases.export');
+    Route::resource('purchases', PurchaseController::class)->except(['show']);
     Route::get('role-permissions', [App\Http\Controllers\RolePermissionController::class, 'index'])->name('role-permissions.index');
     Route::get('role-permissions/{role}/edit', [App\Http\Controllers\RolePermissionController::class, 'edit'])->name('role-permissions.edit');
     Route::put('role-permissions/{role}', [App\Http\Controllers\RolePermissionController::class, 'update'])->name('role-permissions.update');

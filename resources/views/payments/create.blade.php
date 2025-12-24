@@ -131,10 +131,21 @@
             <div class="form-group">
                 <label for="bukti_bayar_file">Upload Bukti Pembayaran</label>
                 <input type="file" name="bukti_bayar_file" id="bukti_bayar_file" class="form-control @error('bukti_bayar_file') is-invalid @enderror" accept="image/*,.pdf">
-                <small class="text-muted">JPG/PNG/PDF, maks 2 MB</small>
+                <small class="text-muted">JPG/PNG/PDF, maks 2 MB. Gambar akan dikompresi otomatis.</small>
                 @error('bukti_bayar_file')
                     <span class="invalid-feedback">{{ $message }}</span>
                 @enderror
+                <div id="bukti-preview" class="mt-2 d-none">
+                    <div class="border rounded p-2">
+                        <div class="d-flex align-items-center">
+                            <img id="bukti-preview-img" src="#" alt="Preview" class="img-thumbnail mr-2 d-none" style="max-height:120px; max-width:180px;">
+                            <div>
+                                <div id="bukti-preview-name" class="font-weight-bold small"></div>
+                                <div class="text-muted small">Pratinjau bukti pembayaran</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="form-group">
@@ -145,3 +156,64 @@
     </div>
 </div>
 @endsection
+
+@push('js')
+<script src="https://cdn.jsdelivr.net/npm/compressorjs@1.2.1/dist/compressor.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const fileInput = document.getElementById('bukti_bayar_file');
+    const preview = document.getElementById('bukti-preview');
+    const previewImg = document.getElementById('bukti-preview-img');
+    const previewName = document.getElementById('bukti-preview-name');
+
+    if (!fileInput) return;
+
+    const resetPreview = () => {
+        preview.classList.add('d-none');
+        previewImg.classList.add('d-none');
+        previewImg.src = '#';
+        previewName.textContent = '';
+    };
+
+    fileInput.addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (!file) {
+            resetPreview();
+            return;
+        }
+
+        const isImage = file.type && file.type.startsWith('image/');
+        previewName.textContent = `${file.name} (${Math.round(file.size / 1024)} KB)`;
+
+        if (isImage) {
+            new Compressor(file, {
+                quality: 0.6,
+                maxWidth: 1920,
+                maxHeight: 1920,
+                convertSize: 500000,
+                success(result) {
+                    // Replace the file input with compressed file while preserving name
+                    const compressedFile = new File([result], file.name, { type: result.type, lastModified: Date.now() });
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(compressedFile);
+                    fileInput.files = dataTransfer.files;
+
+                    const url = URL.createObjectURL(result);
+                    previewImg.src = url;
+                    previewImg.classList.remove('d-none');
+                    preview.classList.remove('d-none');
+                },
+                error(err) {
+                    console.error(err);
+                    previewImg.classList.add('d-none');
+                    preview.classList.remove('d-none');
+                }
+            });
+        } else {
+            previewImg.classList.add('d-none');
+            preview.classList.remove('d-none');
+        }
+    });
+});
+</script>
+@endpush

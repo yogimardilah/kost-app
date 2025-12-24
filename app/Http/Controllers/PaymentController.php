@@ -6,6 +6,7 @@ use App\Models\Payment;
 use App\Models\Billing;
 use App\Http\Requests\StorePaymentRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class PaymentController extends Controller
 {
@@ -92,7 +93,10 @@ class PaymentController extends Controller
         // handle file upload (optional)
         $note = $data['bukti_bayar'] ?? null;
         if ($request->hasFile('bukti_bayar_file')) {
-            $path = $request->file('bukti_bayar_file')->store('payments', 'public');
+            $file = $request->file('bukti_bayar_file');
+            $extension = $file->getClientOriginalExtension();
+            $uniqueName = Str::uuid() . '.' . $extension;
+            $path = $file->storeAs('payments', $uniqueName, 'public');
             $data['bukti_bayar'] = $note ? ($note . ' | file:' . $path) : $path;
         }
 

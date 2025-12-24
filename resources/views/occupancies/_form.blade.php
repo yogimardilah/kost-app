@@ -50,8 +50,9 @@
 
     <div class="form-group mb-3">
         <label for="tanggal_masuk">Tanggal Masuk <span class="text-danger">*</span></label>
-        <input type="date" name="tanggal_masuk" id="tanggal_masuk" class="form-control @error('tanggal_masuk') is-invalid @enderror" value="{{ old('tanggal_masuk', $occupancy->tanggal_masuk ?? '') }}" required>
+        <input type="date" name="tanggal_masuk" id="tanggal_masuk" class="form-control @error('tanggal_masuk') is-invalid @enderror" value="{{ old('tanggal_masuk', $occupancy->tanggal_masuk ?? now()->format('Y-m-d')) }}" required readonly>
         @error('tanggal_masuk') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+        <small class="form-text text-muted">Tanggal masuk otomatis diisi hari ini dan tidak dapat diubah.</small>
     </div>
 
     <div class="form-group mb-3">
