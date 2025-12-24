@@ -543,7 +543,8 @@
                          data-status="{{ $item->room->status }}"
                          data-jenis="{{ $item->room->jenis_kamar }}"
                          data-harga="{{ number_format($item->room->harga,0,',','.') }}"
-                         data-harga-harian="{{ $item->room->harga_harian ? number_format($item->room->harga_harian,0,',','.') : '-' }}">
+                         data-harga-harian="{{ $item->room->harga_harian ? number_format($item->room->harga_harian,0,',','.') : '-' }}"
+                         data-fasilitas="{{ $item->room->fasilitas ?? '-' }}">
                         <div class="seat-header available">
                             <span class="seat-badge">○</span>
                             <div class="seat-number">{{ $item->room->nomor_kamar }}</div>
@@ -578,6 +579,8 @@
                          data-complete-url="{{ $occ->complete_url ?? '' }}"
                          data-upgrade-url="{{ $occ->upgrade_url ?? '' }}"
                          data-room="{{ $occ->room->nomor_kamar ?? '-' }}"
+                         data-jenis="{{ $occ->room->jenis_kamar ?? '-' }}"
+                         data-fasilitas="{{ $occ->room->fasilitas ?? '-' }}"
                          data-tenant="{{ $occ->consumer->nama ?? '-' }}"
                          data-status="{{ $occ->status }}"
                          data-masuk="{{ $occ->tanggal_masuk }}"
@@ -676,6 +679,7 @@
                     <div class="modal-info-row"><span class="label">Jenis</span><span class="value">${data.jenis}</span></div>
                     <div class="modal-info-row"><span class="label">Harga Bulanan</span><span class="value">Rp ${data.harga}</span></div>
                     <div class="modal-info-row"><span class="label">Harga Harian</span><span class="value">Rp ${data.hargaHarian}</span></div>
+                    <div class="modal-info-row"><span class="label">Fasilitas</span><span class="value" style="white-space: pre-line;">${data.fasilitas || '-'}</span></div>
                 `;
                 
                 document.getElementById('modalAdd').style.display = '';
@@ -688,9 +692,11 @@
             } else {
                 bodyHTML = `
                     <div class="modal-info-row"><span class="label">Penyewa</span><span class="value">${data.tenant}</span></div>
+                    <div class="modal-info-row"><span class="label">Jenis Kamar</span><span class="value">${data.jenis || '-'}</span></div>
                     <div class="modal-info-row"><span class="label">Status</span><span class="value">${data.status}</span></div>
                     <div class="modal-info-row"><span class="label">Check-in</span><span class="value">${data.masuk}</span></div>
                     <div class="modal-info-row"><span class="label">Check-out</span><span class="value">${data.keluar || '-'}</span></div>
+                    <div class="modal-info-row"><span class="label">Fasilitas</span><span class="value" style="white-space: pre-line;">${data.fasilitas || '-'}</span></div>
                 `;
                 
                 if (data.days) {

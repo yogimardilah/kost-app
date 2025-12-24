@@ -16,12 +16,39 @@
             <option value="">-- Pilih Kamar --</option>
             @foreach($rooms as $room)
                 <option value="{{ $room->id }}" 
+                    data-jenis="{{ $room->jenis_kamar }}"
+                    data-harga="{{ number_format($room->harga, 0, ',', '.') }}"
+                    data-harga-harian="{{ $room->harga_harian ? number_format($room->harga_harian, 0, ',', '.') : '-' }}"
+                    data-fasilitas="{{ $room->fasilitas ?? '-' }}"
                     {{ old('room_id', $occupancy->room_id ?? $selectedRoomId ?? '') == $room->id ? 'selected' : '' }}>
                     {{ $room->nomor_kamar }} - {{ $room->jenis_kamar }}
                 </option>
             @endforeach
         </select>
         @error('room_id') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+    </div>
+
+    <!-- Room Info Display -->
+    <div id="room-info" class="alert alert-info" style="display: none;">
+        <h6><strong>Informasi Kamar</strong></h6>
+        <table class="table table-sm table-borderless mb-0">
+            <tr>
+                <td width="150"><strong>Jenis Kamar:</strong></td>
+                <td id="info-jenis">-</td>
+            </tr>
+            <tr>
+                <td><strong>Harga Bulanan:</strong></td>
+                <td id="info-harga">-</td>
+            </tr>
+            <tr>
+                <td><strong>Harga Harian:</strong></td>
+                <td id="info-harga-harian">-</td>
+            </tr>
+            <tr>
+                <td><strong>Fasilitas:</strong></td>
+                <td id="info-fasilitas" style="white-space: pre-line;">-</td>
+            </tr>
+        </table>
     </div>
 
     <div class="form-group mb-3">
@@ -74,6 +101,35 @@
         const tipeSewa = document.getElementById('tipe_sewa');
         const tanggalMasuk = document.getElementById('tanggal_masuk');
         const tanggalKeluar = document.getElementById('tanggal_keluar');
+        const roomSelect = document.getElementById('room_id');
+        const roomInfo = document.getElementById('room-info');
+
+        // Show room info when room is selected
+        function updateRoomInfo() {
+            const selectedOption = roomSelect.options[roomSelect.selectedIndex];
+            if (roomSelect.value && selectedOption) {
+                const jenis = selectedOption.getAttribute('data-jenis');
+                const harga = selectedOption.getAttribute('data-harga');
+                const hargaHarian = selectedOption.getAttribute('data-harga-harian');
+                const fasilitas = selectedOption.getAttribute('data-fasilitas');
+
+                document.getElementById('info-jenis').textContent = jenis || '-';
+                document.getElementById('info-harga').textContent = harga ? 'Rp ' + harga : '-';
+                document.getElementById('info-harga-harian').textContent = hargaHarian !== '-' ? 'Rp ' + hargaHarian : '-';
+                document.getElementById('info-fasilitas').textContent = fasilitas || '-';
+                
+                roomInfo.style.display = 'block';
+            } else {
+                roomInfo.style.display = 'none';
+            }
+        }
+
+        roomSelect.addEventListener('change', updateRoomInfo);
+        
+        // Trigger on page load if room is pre-selected
+        if (roomSelect.value) {
+            updateRoomInfo();
+        }
 
         function autoCalculateCheckout() {
             if (!tanggalMasuk.value) return;

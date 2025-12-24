@@ -43,6 +43,13 @@
         @error('harga_harian') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
     </div>
 
+    <div class="form-group mb-3">
+        <label for="fasilitas">Fasilitas Kamar</label>
+        <textarea name="fasilitas" id="fasilitas" class="form-control @error('fasilitas') is-invalid @enderror" rows="4" placeholder="Contoh: AC, TV, Kamar mandi dalam, WiFi, Lemari, Kasur, Meja belajar, dll.">{{ old('fasilitas', $room->fasilitas ?? '') }}</textarea>
+        <small class="form-text text-muted">Opsional - Deskripsi fasilitas yang tersedia di kamar ini</small>
+        @error('fasilitas') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+    </div>
+
     @if($room)
     <div class="form-group mb-3">
         <label for="status">Status <span class="text-danger">*</span></label>

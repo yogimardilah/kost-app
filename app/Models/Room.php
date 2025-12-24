@@ -14,6 +14,7 @@ class Room extends Model
         'jenis_kamar',
         'harga',
         'harga_harian',
+        'fasilitas',
         'status',
         'kost_id',
     ];
