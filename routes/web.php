@@ -58,6 +58,9 @@ Route::middleware('auth')->group(function () {
     Route::post('role-permissions/reset', [App\Http\Controllers\RolePermissionController::class, 'resetPermissions'])->name('role-permissions.reset');
     Route::get('reports/occupancy', [App\Http\Controllers\ReportController::class, 'occupancy'])->name('reports.occupancy');
     Route::get('reports/finance', [App\Http\Controllers\ReportController::class, 'finance'])->name('reports.finance');
+    Route::get('reports/revenue-daily', [App\Http\Controllers\ReportController::class, 'revenueDaily'])->name('reports.revenue-daily');
+    Route::get('reports/revenue-monthly', [App\Http\Controllers\ReportController::class, 'revenueMonthly'])->name('reports.revenue-monthly');
+    Route::get('reports/traffic', [App\Http\Controllers\ReportController::class, 'traffic'])->name('reports.traffic');
 
     // Addon Transactions (specific routes BEFORE resource to avoid conflicts)
     Route::get('addon-transactions/consumer/{consumer}/active-room', [App\Http\Controllers\AddonTransactionController::class, 'consumerActiveRoom'])

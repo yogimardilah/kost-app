@@ -335,6 +335,9 @@ return [
             'submenu' => [
                 ['text' => 'Laporan Hunian', 'url' => 'reports/occupancy', 'icon' => 'fas fa-bed', 'menu_code' => 'reports_occupancy'],
                 ['text' => 'Laporan Keuangan', 'url' => 'reports/finance', 'icon' => 'fas fa-money-bill-wave', 'menu_code' => 'reports_finance'],
+                ['text' => 'Chart Pendapatan Harian', 'url' => 'reports/revenue-daily', 'icon' => 'fas fa-chart-bar', 'menu_code' => 'reports_revenue_daily'],
+                ['text' => 'Chart Pendapatan Bulanan', 'url' => 'reports/revenue-monthly', 'icon' => 'fas fa-chart-area', 'menu_code' => 'reports_revenue_monthly'],
+                ['text' => 'Chart Traffic In/Out', 'url' => 'reports/traffic', 'icon' => 'fas fa-exchange-alt', 'menu_code' => 'reports_traffic'],
             ],
         ],
         [

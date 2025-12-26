@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\RoomOccupancy;
 use App\Models\Billing;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use App\Services\ReportService;
+use Illuminate\Support\Facades\DB;
 
 class ReportController extends Controller
 {
@@ -177,5 +179,139 @@ class ReportController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Chart Pendapatan Harian
+     */
+    public function revenueDaily(Request $request)
+    {
+        $month = $request->get('month', now()->format('Y-m'));
+        $startDate = Carbon::parse($month . '-01')->startOfMonth();
+        $endDate = Carbon::parse($month . '-01')->endOfMonth();
+
+        // Get daily payments for the selected month
+        $payments = Payment::whereBetween('tanggal_bayar', [$startDate, $endDate])
+            ->select(
+                DB::raw('DATE(tanggal_bayar) as date'),
+                DB::raw('SUM(jumlah) as total')
+            )
+            ->groupBy(DB::raw('DATE(tanggal_bayar)'))
+            ->orderBy('date')
+            ->get();
+
+        // Create array of all days in month
+        $days = [];
+        $revenues = [];
+        $current = $startDate->copy();
+        
+        while ($current <= $endDate) {
+            $dateStr = $current->format('Y-m-d');
+            $days[] = $current->format('d M');
+            
+            $payment = $payments->firstWhere('date', $dateStr);
+            $revenues[] = $payment ? (float)$payment->total : 0;
+            
+            $current->addDay();
+        }
+
+        $chartData = [
+            'labels' => $days,
+            'data' => $revenues,
+        ];
+
+        return view('reports.revenue-daily', compact('chartData', 'month'));
+    }
+
+    /**
+     * Chart Pendapatan Bulanan
+     */
+    public function revenueMonthly(Request $request)
+    {
+        $year = $request->get('year', now()->year);
+
+        // Get monthly payments for the selected year
+        $payments = Payment::whereYear('tanggal_bayar', $year)
+            ->select(
+                DB::raw('EXTRACT(MONTH FROM tanggal_bayar) as month'),
+                DB::raw('SUM(jumlah) as total')
+            )
+            ->groupBy(DB::raw('EXTRACT(MONTH FROM tanggal_bayar)'))
+            ->orderBy('month')
+            ->get();
+
+        // Create array for all 12 months
+        $months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        $revenues = [];
+
+        for ($i = 1; $i <= 12; $i++) {
+            $payment = $payments->firstWhere('month', $i);
+            $revenues[] = $payment ? (float)$payment->total : 0;
+        }
+
+        $chartData = [
+            'labels' => $months,
+            'data' => $revenues,
+        ];
+
+        return view('reports.revenue-monthly', compact('chartData', 'year'));
+    }
+
+    /**
+     * Chart Traffic In/Out Harian (per Bulan)
+     */
+    public function traffic(Request $request)
+    {
+        $month = $request->get('month', now()->format('Y-m'));
+        $startDate = Carbon::parse($month . '-01')->startOfMonth();
+        $endDate = Carbon::parse($month . '-01')->endOfMonth();
+
+        // Get daily check-ins
+        $checkIns = RoomOccupancy::whereBetween('tanggal_masuk', [$startDate, $endDate])
+            ->select(
+                DB::raw('DATE(tanggal_masuk) as date'),
+                DB::raw('COUNT(*) as total')
+            )
+            ->groupBy(DB::raw('DATE(tanggal_masuk)'))
+            ->orderBy('date')
+            ->get();
+
+        // Get daily check-outs
+        $checkOuts = RoomOccupancy::whereBetween('tanggal_keluar', [$startDate, $endDate])
+            ->where('status', 'tidak aktif')
+            ->select(
+                DB::raw('DATE(tanggal_keluar) as date'),
+                DB::raw('COUNT(*) as total')
+            )
+            ->groupBy(DB::raw('DATE(tanggal_keluar)'))
+            ->orderBy('date')
+            ->get();
+
+        // Create array of all days in month
+        $days = [];
+        $ins = [];
+        $outs = [];
+        $current = $startDate->copy();
+        
+        while ($current <= $endDate) {
+            $dateStr = $current->format('Y-m-d');
+            $days[] = $current->format('d M');
+            
+            $checkIn = $checkIns->firstWhere('date', $dateStr);
+            $ins[] = $checkIn ? (int)$checkIn->total : 0;
+            
+            $checkOut = $checkOuts->firstWhere('date', $dateStr);
+            $outs[] = $checkOut ? (int)$checkOut->total : 0;
+            
+            $current->addDay();
+        }
+
+        $chartData = [
+            'labels' => $days,
+            'checkIns' => $ins,
+            'checkOuts' => $outs,
+        ];
+
+        return view('reports.traffic', compact('chartData', 'month'));
     }
 }

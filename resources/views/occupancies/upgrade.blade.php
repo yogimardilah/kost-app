@@ -39,9 +39,9 @@
                 <div class="form-group">
                     <label for="upgrade_from">Tanggal Mulai Harga Baru</label>
                     <input type="date" name="upgrade_from" id="upgrade_from" class="form-control @error('upgrade_from') is-invalid @enderror" 
-                           value="{{ old('upgrade_from', optional($billing->periode_awal)->format('Y-m-d') ?? now()->format('Y-m-d')) }}" required>
+                           value="{{ old('upgrade_from', now()->format('Y-m-d')) }}" required readonly>
                     @error('upgrade_from') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
-                    <small class="text-muted">Tanggal mulai berlaku harga kamar baru</small>
+                    <small class="text-muted">Tanggal mulai berlaku harga kamar baru (otomatis hari ini)</small>
                 </div>
 
                 <div class="form-group">
