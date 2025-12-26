@@ -42,7 +42,8 @@ class RoomOccupancyController extends Controller
                     $occ->days_remaining = $tglKeluar->isPast() ? 0 : $today->diffInDays($tglKeluar);
 
                     if ($tglKeluar->lt($today)) {
-                        $occ->update(['status' => 'tidak aktif']);
+                        // Update only fillable fields
+                        RoomOccupancy::where('id', $occ->id)->update(['status' => 'tidak aktif']);
                         $room->update(['status' => 'tersedia']);
                         $availableRooms[] = $room;
                         continue;
