@@ -78,12 +78,12 @@ class ReportController extends Controller
             });
         }
 
-        // Date range by periode_awal and periode_akhir
+        // Date range by invoice date (created_at)
         if ($request->filled('start_date')) {
-            $query->whereDate('periode_awal', '>=', $request->start_date);
+            $query->whereDate('created_at', '>=', $request->start_date);
         }
         if ($request->filled('end_date')) {
-            $query->whereDate('periode_akhir', '<=', $request->end_date);
+            $query->whereDate('created_at', '<=', $request->end_date);
         }
 
         // Status filter (pending, sebagian, lunas)
@@ -91,7 +91,7 @@ class ReportController extends Controller
             $query->where('status', $request->status);
         }
 
-        $query->orderBy('periode_awal','desc');
+        $query->orderBy('created_at','desc');
 
         // Export to Excel
         if ($request->has('export') && $request->export === 'excel') {

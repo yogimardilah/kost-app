@@ -21,10 +21,10 @@
                 <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Cari invoice/penyewa/NIK/kamar">
             </div>
             <div class="form-group mr-2 mb-2">
-                <input type="date" name="start_date" value="{{ request('start_date') }}" class="form-control">
+                <input type="date" name="start_date" value="{{ request('start_date') }}" class="form-control" placeholder="Tanggal Invoice (Dari)">
             </div>
             <div class="form-group mr-2 mb-2">
-                <input type="date" name="end_date" value="{{ request('end_date') }}" class="form-control">
+                <input type="date" name="end_date" value="{{ request('end_date') }}" class="form-control" placeholder="Tanggal Invoice (Sampai)">
             </div>
             <div class="form-group mr-2 mb-2">
                 <select name="status" class="form-control">

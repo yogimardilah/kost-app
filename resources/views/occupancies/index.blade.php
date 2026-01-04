@@ -511,7 +511,7 @@
             </div>
             <div class="legend-item">
                 <div class="legend-box warning"></div>
-                <span>Belum Bayar H - 5 Checkout</span>
+                <span>Belum Lunas</span>
             </div>
             <div class="legend-item">
                 <div class="legend-box soon"></div>
@@ -558,7 +558,7 @@
                         $cardClass = 'occupied';
                         if (!empty($occ->expired)) {
                             $cardClass = 'expired';
-                        } elseif (!empty($occ->due_soon_unpaid)) {
+                        } elseif (!empty($occ->has_unpaid)) {
                             $cardClass = 'warning';
                         } elseif (!empty($occ->due_soon)) {
                             $cardClass = 'soon';
@@ -590,7 +590,7 @@
                             <span class="seat-badge">
                                 @if(!empty($occ->expired))
                                     ✖
-                                @elseif(!empty($occ->due_soon_unpaid))
+                                @elseif(!empty($occ->has_unpaid))
                                     !
                                 @else
                                     ✓

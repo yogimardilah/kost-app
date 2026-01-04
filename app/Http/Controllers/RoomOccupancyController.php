@@ -53,16 +53,17 @@ class RoomOccupancyController extends Controller
                     $daysUntil = $today->diffInDays($tglKeluar);
                     if ($daysUntil <= 5) {
                         $occ->due_soon = true;
-
-                        $hasUnpaid = Billing::where('room_id', $occ->room_id)
-                            ->where('consumer_id', $occ->consumer_id)
-                            ->whereIn('status', ['pending', 'sebagian'])
-                            ->exists();
-
-                        if ($hasUnpaid) {
-                            $occ->due_soon_unpaid = true;
-                        }
                     }
+                }
+
+                // Check for unpaid bills (regardless of checkout date)
+                $hasUnpaid = Billing::where('room_id', $occ->room_id)
+                    ->where('consumer_id', $occ->consumer_id)
+                    ->whereIn('status', ['pending', 'sebagian'])
+                    ->exists();
+
+                if ($hasUnpaid) {
+                    $occ->has_unpaid = true;
                 }
 
                 // Attach room relation

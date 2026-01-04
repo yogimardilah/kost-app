@@ -76,7 +76,10 @@
             </div>
         </div>
         
-        <small class="form-text text-muted">Format: JPG, PNG, PDF (Max: 2MB)</small>
+        <small class="form-text text-muted">
+            Format: JPG, PNG, GIF, WebP, PDF (Max: 2MB)<br>
+            <i class="fas fa-info-circle"></i> Gambar akan dikompres otomatis
+        </small>
     </div>
 
     <script>
