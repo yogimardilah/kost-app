@@ -135,7 +135,7 @@
                     @forelse($transactions as $i => $t)
                         <tr>
                             <td>{{ $transactions->firstItem() + $i }}</td>
-                            <td>{{ \Carbon\Carbon::parse($t->transaction_date)->format('d/m/Y') }}</td>
+                            <td>{{ \Carbon\Carbon::parse($t->transaction_date)->format('d/m/Y H:i:s') }}</td>
                             <td>
                                 @if($t->type === 'billing')
                                     <span class="badge badge-primary">Tagihan</span>

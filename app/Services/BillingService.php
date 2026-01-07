@@ -39,10 +39,12 @@ class BillingService
 
         // Add room rent as first billing detail (daily vs monthly with proration)
         $roomMonthly = $occupancy->room->harga ?? 0;
-        $roomDaily = $occupancy->room->harga_harian ?? null;
-        $useDaily = $roomDaily && $days < 30;
-
-        if ($useDaily) {
+        $roomDaily = $occupancy->room->harga_harian ?? 0;
+        $tipeHarga = $occupancy->room->tipe_harga ?? 'bulanan'; // Get room pricing type
+        
+        // Use room's tipe_harga to determine pricing, not duration
+        if ($tipeHarga === 'harian' && $roomDaily > 0) {
+            // Daily pricing
             $unit = (int) $roomDaily;
             $qty = $days;
             $subtotal = $unit * $qty;
@@ -55,7 +57,7 @@ class BillingService
             ]);
             $totalTagihan += $subtotal;
         } elseif ($roomMonthly > 0) {
-            // Prorate monthly price based on actual days in the running month
+            // Monthly pricing with proration based on actual days
             $daysInMonth = $start->daysInMonth;
             $hargaPerHari = $roomMonthly / $daysInMonth;
             $subtotalRaw = $hargaPerHari * $days;
