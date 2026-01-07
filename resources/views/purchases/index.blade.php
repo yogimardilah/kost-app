@@ -98,7 +98,7 @@
                             @foreach($purchases as $idx => $purchase)
                             <tr>
                                 <td>{{ ($purchases->currentPage() - 1) * $purchases->perPage() + $idx + 1 }}</td>
-                                <td>{{ $purchase->purchase_date->format('d/m/Y') }}</td>
+                                <td>{{ $purchase->purchase_date->format('d/m/Y H:i:s') }}</td>
                                 <td>
                                     <span class="badge bg-info">{{ $purchase->kost->nama_kost ?? '-' }}</span>
                                 </td>

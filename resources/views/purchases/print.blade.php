@@ -25,7 +25,7 @@
                     @forelse($purchases as $idx => $purchase)
                         <tr>
                             <td>{{ $idx + 1 }}</td>
-                            <td>{{ optional($purchase->purchase_date)->format('d/m/Y') }}</td>
+                            <td>{{ optional($purchase->purchase_date)->format('d/m/Y H:i:s') }}</td>
                             <td>{{ $purchase->kost->nama_kost ?? '-' }}</td>
                             <td>{{ $purchase->description }}</td>
                             <td>{{ ucfirst(str_replace('_', ' ', $purchase->category)) }}</td>

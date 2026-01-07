@@ -52,9 +52,9 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="purchase_date">Tanggal Pembelian <span class="text-danger">*</span></label>
-                    <input type="date" name="purchase_date" id="purchase_date" class="form-control @error('purchase_date') is-invalid @enderror" 
-                           value="{{ old('purchase_date', date('Y-m-d')) }}" required>
+                    <label for="purchase_date">Tanggal & Waktu Pembelian <span class="text-danger">*</span></label>
+                    <input type="datetime-local" name="purchase_date" id="purchase_date" class="form-control @error('purchase_date') is-invalid @enderror" 
+                           value="{{ old('purchase_date', date('Y-m-d\TH:i')) }}" required>
                     @error('purchase_date') <span class="invalid-feedback">{{ $message }}</span> @enderror
                 </div>
 

@@ -231,7 +231,7 @@
         <div class="signature-block">
             <p>Menyetujui,<br>Pimpinan</p>
             <div class="signature-line">
-                (&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)
+                ( Serena Kost )
             </div>
         </div>
     </div>

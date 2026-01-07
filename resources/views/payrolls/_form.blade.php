@@ -63,34 +63,6 @@
                     <span class="invalid-feedback">{{ $message }}</span>
                 @enderror
             </div>
-
-            <!-- Prorate Info (Hidden initially) -->
-            <div id="prorate-info" class="alert alert-info" style="display: none;">
-                <h6><i class="fas fa-calculator"></i> Perhitungan Prorate</h6>
-                <table class="table table-sm table-borderless mb-0">
-                    <tr>
-                        <td width="50%">Gaji Bulanan:</td>
-                        <td class="text-right"><strong id="gaji-full"></strong></td>
-                    </tr>
-                    <tr>
-                        <td>Total Hari Bulan Ini:</td>
-                        <td class="text-right"><span id="total-hari"></span> hari</td>
-                    </tr>
-                    <tr>
-                        <td>Hari Kerja:</td>
-                        <td class="text-right"><span id="hari-kerja"></span> hari</td>
-                    </tr>
-                    <tr>
-                        <td>Gaji Per Hari:</td>
-                        <td class="text-right"><span id="gaji-per-hari"></span></td>
-                    </tr>
-                    <tr class="border-top">
-                        <td><strong>Total (Prorate):</strong></td>
-                        <td class="text-right"><strong class="text-primary" id="gaji-prorate"></strong></td>
-                    </tr>
-                </table>
-                <small class="text-muted" id="prorate-reason"></small>
-            </div>
         </div>
 
         <!-- Right Column -->
@@ -125,16 +97,20 @@
                 @enderror
             </div>
 
-            <!-- Total Gaji (Display Only) -->
+            <!-- Total Gaji -->
             <div class="form-group">
-                <label>Total Gaji</label>
+                <label for="total_gaji_display">Total Gaji</label>
                 <div class="input-group">
                     <div class="input-group-prepend">
                         <span class="input-group-text">Rp</span>
                     </div>
-                    <input type="text" id="total_gaji_display" class="form-control bg-light" readonly>
+                    <input type="number" name="total_gaji" id="total_gaji_display" class="form-control @error('total_gaji') is-invalid @enderror" 
+                           value="{{ old('total_gaji', $payroll->total_gaji ?? 0) }}" min="0">
                 </div>
-                <small class="form-text text-muted">Gaji Pokok + Bonus - Potongan</small>
+                <small class="form-text text-muted">Otomatis: Gaji Pokok + Bonus - Potongan (dapat diedit manual)</small>
+                @error('total_gaji')
+                    <span class="invalid-feedback">{{ $message }}</span>
+                @enderror
             </div>
 
             <!-- Status -->
@@ -151,9 +127,9 @@
 
             <!-- Tanggal Bayar (only show if status dibayar) -->
             <div class="form-group" id="tanggal_bayar_group" style="display: none;">
-                <label for="tanggal_bayar">Tanggal Bayar</label>
-                <input type="date" name="tanggal_bayar" id="tanggal_bayar" class="form-control @error('tanggal_bayar') is-invalid @enderror" 
-                       value="{{ old('tanggal_bayar', isset($payroll) && $payroll->tanggal_bayar ? $payroll->tanggal_bayar->format('Y-m-d') : '') }}">
+                <label for="tanggal_bayar">Tanggal & Waktu Bayar</label>
+                <input type="datetime-local" name="tanggal_bayar" id="tanggal_bayar" class="form-control @error('tanggal_bayar') is-invalid @enderror" 
+                       value="{{ old('tanggal_bayar', isset($payroll) && $payroll->tanggal_bayar ? $payroll->tanggal_bayar->format('Y-m-d\TH:i') : '') }}">
                 @error('tanggal_bayar')
                     <span class="invalid-feedback">{{ $message }}</span>
                 @enderror

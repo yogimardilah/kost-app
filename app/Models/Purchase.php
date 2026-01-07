@@ -24,7 +24,7 @@ class Purchase extends Model
     ];
 
     protected $casts = [
-        'purchase_date' => 'date',
+        'purchase_date' => 'datetime',
         'amount' => 'decimal:2',
         'deleted_at' => 'datetime',
     ];

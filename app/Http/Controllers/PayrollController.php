@@ -83,8 +83,8 @@ class PayrollController extends Controller
         // Generate slip number: SLIP/YYYY/MM/XXX
         $year = $data['tahun'];
         $month = str_pad($data['bulan'], 2, '0', STR_PAD_LEFT);
-        $lastSlip = Payroll::whereYear('created_at', $year)
-            ->whereMonth('created_at', $data['bulan'])
+        $lastSlip = Payroll::where('tahun', $year)
+            ->where('bulan', $data['bulan'])
             ->orderBy('id', 'desc')
             ->first();
         $sequence = $lastSlip ? (intval(substr($lastSlip->slip_number, -3)) + 1) : 1;
