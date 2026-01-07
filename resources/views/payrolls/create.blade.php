@@ -1,17 +1,17 @@
 @extends('adminlte::page')
 
-@section('title', 'Tambah Payroll')
+@section('title', 'Tambah Pembayaran')
 
 @section('content_header')
-    <h1>Tambah Payroll</h1>
+    <h1>Tambah Pembayaran</h1>
 @stop
 
 @section('content')
     <div class="card">
         <div class="card-header">
-            <h3 class="card-title">Form Tambah Payroll</h3>
+            <h3 class="card-title">Form Tambah Pembayaran</h3>
         </div>
-        <form action="{{ route('payrolls.store') }}" method="POST">
+        <form action="{{ route('payrolls.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             @include('payrolls._form')
             <div class="card-footer">

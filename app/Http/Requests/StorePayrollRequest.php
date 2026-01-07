@@ -39,6 +39,7 @@ class StorePayrollRequest extends FormRequest
             'tanggal_bayar' => 'nullable|date',
             'status' => 'required|in:pending,dibayar',
             'keterangan' => 'nullable|string',
+            'file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:5120',
         ];
     }
 
@@ -51,14 +52,15 @@ class StorePayrollRequest extends FormRequest
     {
         return [
             'employee_id' => 'Karyawan',
-            'bulan' => 'Bulan',
-            'tahun' => 'Tahun',
+            'bulan' => 'Periode Bulan',
+            'tahun' => 'Periode Tahun',
             'gaji_pokok' => 'Gaji Pokok',
             'bonus' => 'Bonus',
             'potongan' => 'Potongan',
             'tanggal_bayar' => 'Tanggal Bayar',
             'status' => 'Status',
             'keterangan' => 'Keterangan',
+            'file' => 'File',
         ];
     }
 

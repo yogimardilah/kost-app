@@ -24,7 +24,7 @@
 
             <!-- Bulan -->
             <div class="form-group">
-                <label for="bulan">Bulan <span class="text-danger">*</span></label>
+                <label for="bulan">Periode Bulan <span class="text-danger">*</span></label>
                 <select name="bulan" id="bulan" class="form-control @error('bulan') is-invalid @enderror" required>
                     <option value="">-- Pilih Bulan --</option>
                     @for($i = 1; $i <= 12; $i++)
@@ -40,7 +40,7 @@
 
             <!-- Tahun -->
             <div class="form-group">
-                <label for="tahun">Tahun <span class="text-danger">*</span></label>
+                <label for="tahun">Periode Tahun <span class="text-danger">*</span></label>
                 <input type="number" name="tahun" id="tahun" class="form-control @error('tahun') is-invalid @enderror" 
                        value="{{ old('tahun', $payroll->tahun ?? date('Y')) }}" required min="2020" max="2100">
                 @error('tahun')
@@ -167,12 +167,93 @@
                     <span class="invalid-feedback">{{ $message }}</span>
                 @enderror
             </div>
+
+            <!-- File Upload -->
+            <div class="form-group">
+                <label for="file">Upload File</label>
+                <input type="file" name="file" id="file" class="form-control-file @error('file') is-invalid @enderror" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="previewPayrollFile(this)">
+                @error('file')
+                    <span class="invalid-feedback d-block">{{ $message }}</span>
+                @enderror
+                
+                @if(isset($payroll) && $payroll->file_path)
+                    <div class="mt-2" id="currentFilePreview">
+                        <label class="d-block"><strong>File Saat Ini:</strong></label>
+                        @php
+                            $extension = strtolower(pathinfo($payroll->file_path, PATHINFO_EXTENSION));
+                            $isImage = in_array($extension, ['jpg', 'jpeg', 'png', 'gif']);
+                        @endphp
+                        
+                        @if($isImage)
+                            <div class="border rounded p-2" style="max-width: 400px;">
+                                <img src="{{ Storage::url($payroll->file_path) }}" alt="File Payroll" class="img-fluid rounded" style="max-height: 300px;">
+                                <div class="mt-2">
+                                    <a href="{{ Storage::url($payroll->file_path) }}" target="_blank" class="btn btn-sm btn-info">
+                                        <i class="fas fa-external-link-alt"></i> Lihat Full Size
+                                    </a>
+                                </div>
+                            </div>
+                        @else
+                            <div class="alert alert-info">
+                                <i class="fas fa-file"></i> 
+                                <a href="{{ Storage::url($payroll->file_path) }}" target="_blank" class="alert-link">
+                                    {{ basename($payroll->file_path) }}
+                                </a>
+                            </div>
+                        @endif
+                    </div>
+                @endif
+                
+                <div id="newFilePreview" class="mt-2" style="display: none;">
+                    <label class="d-block"><strong>Preview File Baru:</strong></label>
+                    <div class="border rounded p-2" style="max-width: 400px;">
+                        <img id="previewImage" src="" alt="Preview" class="img-fluid rounded" style="max-height: 300px; display: none;">
+                        <div id="previewDoc" class="alert alert-info" style="display: none;">
+                            <i class="fas fa-file"></i> <span id="docFileName"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <small class="form-text text-muted">
+                    Format: PDF, JPG, PNG, DOC, DOCX (Max: 5MB)<br>
+                    <i class="fas fa-info-circle"></i> Gambar akan dikompres otomatis
+                </small>
+            </div>
         </div>
     </div>
 </div>
 
 @push('js')
 <script>
+    function previewPayrollFile(input) {
+        const preview = document.getElementById('newFilePreview');
+        const previewImage = document.getElementById('previewImage');
+        const previewDoc = document.getElementById('previewDoc');
+        const docFileName = document.getElementById('docFileName');
+        
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            const reader = new FileReader();
+            
+            preview.style.display = 'block';
+            
+            if (file.type.startsWith('image/')) {
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    previewImage.style.display = 'block';
+                    previewDoc.style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                previewImage.style.display = 'none';
+                previewDoc.style.display = 'block';
+                docFileName.textContent = file.name;
+            }
+        } else {
+            preview.style.display = 'none';
+        }
+    }
+
     let employeeData = {
         gaji: 0,
         tanggalBergabung: null,

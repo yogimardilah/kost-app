@@ -38,7 +38,7 @@
             <div class="d-flex justify-content-between align-items-center">
                 <h3 class="card-title">Daftar Payroll</h3>
                 <a href="{{ route('payrolls.create') }}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> Tambah Payroll
+                    <i class="fas fa-plus"></i> Tambah Pembayaran
                 </a>
             </div>
         </div>
@@ -142,7 +142,7 @@
                                     <td>Rp {{ number_format($payroll->bonus, 0, ',', '.') }}</td>
                                     <td>Rp {{ number_format($payroll->potongan, 0, ',', '.') }}</td>
                                     <td><strong>Rp {{ number_format($payroll->total_gaji, 0, ',', '.') }}</strong></td>
-                                    <td>{{ $payroll->tanggal_bayar ? $payroll->tanggal_bayar->format('d M Y') : '-' }}</td>
+                                    <td>{{ $payroll->tanggal_bayar ? $payroll->tanggal_bayar->format('d M Y H:i:s') : '-' }}</td>
                                     <td>
                                         @if($payroll->status == 'dibayar')
                                             <span class="badge badge-success">Dibayar</span>
@@ -155,22 +155,26 @@
                                             <a href="{{ route('payrolls.show', $payroll) }}" class="btn btn-sm btn-info" title="Detail">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            <a href="{{ route('payrolls.edit', $payroll) }}" class="btn btn-sm btn-warning" title="Edit">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
+                                            @if(auth()->user()->role->nama === 'owner')
+                                                <a href="{{ route('payrolls.edit', $payroll) }}" class="btn btn-sm btn-warning" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                            @endif
                                             @if($payroll->status == 'pending')
                                                 <button type="button" class="btn btn-sm btn-success" title="Tandai Dibayar" 
                                                         data-toggle="modal" data-target="#markPaidModal{{ $payroll->id }}">
                                                     <i class="fas fa-check"></i>
                                                 </button>
                                             @endif
-                                            <form action="{{ route('payrolls.destroy', $payroll) }}" method="POST" style="display: inline-block;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data payroll ini?');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-danger" title="Hapus">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
+                                            @if(auth()->user()->role->nama === 'owner')
+                                                <form action="{{ route('payrolls.destroy', $payroll) }}" method="POST" style="display: inline-block;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data payroll ini?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-sm btn-danger" title="Hapus">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>
@@ -199,8 +203,8 @@
                                                         <input type="text" class="form-control" value="Rp {{ number_format($payroll->total_gaji, 0, ',', '.') }}" readonly>
                                                     </div>
                                                     <div class="form-group">
-                                                        <label for="tanggal_bayar">Tanggal Bayar <span class="text-danger">*</span></label>
-                                                        <input type="date" name="tanggal_bayar" class="form-control" value="{{ date('Y-m-d') }}" required>
+                                                        <label for="tanggal_bayar">Tanggal & Waktu Bayar <span class="text-danger">*</span></label>
+                                                        <input type="datetime-local" name="tanggal_bayar" class="form-control" value="{{ \Carbon\Carbon::now('Asia/Jakarta')->format('Y-m-d\TH:i') }}" required>
                                                     </div>
                                                 </div>
                                                 <div class="modal-footer">

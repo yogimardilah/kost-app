@@ -20,9 +20,10 @@ return new class extends Migration
             $table->decimal('bonus', 15, 2)->default(0);
             $table->decimal('potongan', 15, 2)->default(0);
             $table->decimal('total_gaji', 15, 2);
-            $table->date('tanggal_bayar')->nullable();
+            $table->dateTime('tanggal_bayar')->nullable();
             $table->enum('status', ['pending', 'dibayar'])->default('pending');
             $table->text('keterangan')->nullable();
+            $table->string('file_path')->nullable()->comment('Path to uploaded file');
             $table->timestamps();
             
             // Prevent duplicate payroll for same employee in same period

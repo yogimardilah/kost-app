@@ -7,6 +7,8 @@ use App\Models\Employee;
 use App\Http\Requests\StorePayrollRequest;
 use App\Http\Requests\UpdatePayrollRequest;
 use Illuminate\Http\Request;
+use PDF;
+use Intervention\Image\Facades\Image;
 
 class PayrollController extends Controller
 {
@@ -78,8 +80,55 @@ class PayrollController extends Controller
     {
         $data = $request->validated();
         
+        // Generate slip number: SLIP/YYYY/MM/XXX
+        $year = $data['tahun'];
+        $month = str_pad($data['bulan'], 2, '0', STR_PAD_LEFT);
+        $lastSlip = Payroll::whereYear('created_at', $year)
+            ->whereMonth('created_at', $data['bulan'])
+            ->orderBy('id', 'desc')
+            ->first();
+        $sequence = $lastSlip ? (intval(substr($lastSlip->slip_number, -3)) + 1) : 1;
+        $data['slip_number'] = sprintf('SLIP/%s/%s/%03d', $year, $month, $sequence);
+        
         // Calculate total gaji
         $data['total_gaji'] = $data['gaji_pokok'] + $data['bonus'] - $data['potongan'];
+        
+        // Handle file upload with compression for images
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $extension = strtolower($file->getClientOriginalExtension());
+            $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $sanitizedName = preg_replace('/[^a-zA-Z0-9_-]/', '', $originalName);
+            $filename = time() . '_' . uniqid() . '_' . $sanitizedName . '.' . $extension;
+            
+            // Compress if it's an image
+            if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
+                $image = Image::make($file);
+                
+                // Resize if too large (max width 1920px)
+                if ($image->width() > 1920) {
+                    $image->resize(1920, null, function ($constraint) {
+                        $constraint->aspectRatio();
+                        $constraint->upsize();
+                    });
+                }
+                
+                // Create directory if it doesn't exist
+                $directory = storage_path('app' . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'payrolls');
+                if (!is_dir($directory)) {
+                    mkdir($directory, 0755, true);
+                }
+                
+                // Compress and save
+                $path = 'payrolls/' . $filename;
+                $fullPath = $directory . DIRECTORY_SEPARATOR . $filename;
+                $image->save($fullPath, 75);
+                $data['file_path'] = $path;
+            } else {
+                // Non-image files, store normally
+                $data['file_path'] = $file->storeAs('payrolls', $filename, 'public');
+            }
+        }
         
         Payroll::create($data);
 
@@ -114,6 +163,48 @@ class PayrollController extends Controller
         // Calculate total gaji
         $data['total_gaji'] = $data['gaji_pokok'] + $data['bonus'] - $data['potongan'];
         
+        // Handle file upload with compression for images
+        if ($request->hasFile('file')) {
+            // Delete old file if exists
+            if ($payroll->file_path && \Storage::disk('public')->exists($payroll->file_path)) {
+                \Storage::disk('public')->delete($payroll->file_path);
+            }
+            
+            $file = $request->file('file');
+            $extension = strtolower($file->getClientOriginalExtension());
+            $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $sanitizedName = preg_replace('/[^a-zA-Z0-9_-]/', '', $originalName);
+            $filename = time() . '_' . uniqid() . '_' . $sanitizedName . '.' . $extension;
+            
+            // Compress if it's an image
+            if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
+                $image = Image::make($file);
+                
+                // Resize if too large (max width 1920px)
+                if ($image->width() > 1920) {
+                    $image->resize(1920, null, function ($constraint) {
+                        $constraint->aspectRatio();
+                        $constraint->upsize();
+                    });
+                }
+                
+                // Create directory if it doesn't exist
+                $directory = storage_path('app' . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'payrolls');
+                if (!is_dir($directory)) {
+                    mkdir($directory, 0755, true);
+                }
+                
+                // Compress and save
+                $path = 'payrolls/' . $filename;
+                $fullPath = $directory . DIRECTORY_SEPARATOR . $filename;
+                $image->save($fullPath, 75);
+                $data['file_path'] = $path;
+            } else {
+                // Non-image files, store normally
+                $data['file_path'] = $file->storeAs('payrolls', $filename, 'public');
+            }
+        }
+        
         $payroll->update($data);
 
         return redirect()->route('payrolls.index')->with('success', 'Data payroll berhasil diperbarui');
@@ -143,5 +234,29 @@ class PayrollController extends Controller
         ]);
 
         return redirect()->route('payrolls.index')->with('success', 'Payroll berhasil ditandai sebagai dibayar');
+    }
+
+    /**
+     * Print payroll slip as PDF
+     */
+    public function printSlip(Payroll $payroll)
+    {
+        $payroll->load('employee');
+        
+        $html = view('payrolls.slip', compact('payroll'))->render();
+        
+        try {
+            $pdf = PDF::loadHTML($html)
+                ->setPaper('a4')
+                ->setOption('margin-top', 10)
+                ->setOption('margin-right', 10)
+                ->setOption('margin-bottom', 10)
+                ->setOption('margin-left', 10);
+
+            return $pdf->download('Slip-Gaji-' . $payroll->employee->nama . '-' . $payroll->periode . '.pdf');
+        } catch (\Exception $e) {
+            return redirect()->route('payrolls.show', $payroll)
+                ->with('error', 'Gagal membuat PDF: ' . $e->getMessage());
+        }
     }
 }

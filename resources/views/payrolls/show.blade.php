@@ -11,9 +11,14 @@
         <div class="card-header">
             <h3 class="card-title">{{ $payroll->employee->nama }} - {{ $payroll->periode }}</h3>
             <div class="card-tools">
-                <a href="{{ route('payrolls.edit', $payroll) }}" class="btn btn-warning btn-sm">
-                    <i class="fas fa-edit"></i> Edit
+                <a href="{{ route('payrolls.print', $payroll) }}" class="btn btn-info btn-sm" target="_blank">
+                    <i class="fas fa-print"></i> Cetak Slip Gaji
                 </a>
+                @if(auth()->user()->role->nama === 'owner')
+                    <a href="{{ route('payrolls.edit', $payroll) }}" class="btn btn-warning btn-sm">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                @endif
                 <a href="{{ route('payrolls.index') }}" class="btn btn-secondary btn-sm">
                     <i class="fas fa-arrow-left"></i> Kembali
                 </a>
@@ -46,6 +51,10 @@
                     <h5 class="mb-3">Detail Payroll</h5>
                     <table class="table table-bordered">
                         <tr>
+                            <th width="40%">No. Slip Gaji</th>
+                            <td><strong class="text-primary">{{ $payroll->slip_number }}</strong></td>
+                        </tr>
+                        <tr>
                             <th width="40%">Periode</th>
                             <td><strong>{{ $payroll->periode }}</strong></td>
                         </tr>
@@ -77,7 +86,7 @@
                         </tr>
                         <tr>
                             <th>Tanggal Bayar</th>
-                            <td>{{ $payroll->tanggal_bayar ? $payroll->tanggal_bayar->format('d F Y') : '-' }}</td>
+                            <td>{{ $payroll->tanggal_bayar ? $payroll->tanggal_bayar->format('d F Y H:i:s') : '-' }}</td>
                         </tr>
                     </table>
                 </div>
@@ -94,6 +103,90 @@
                     </div>
                 </div>
             </div>
+            @endif
+
+            @if($payroll->file_path)
+            <div class="row mt-3">
+                <div class="col-md-12">
+                    <h5>File Lampiran</h5>
+                    <div class="card">
+                        <div class="card-body">
+                            @php
+                                $extension = strtolower(pathinfo($payroll->file_path, PATHINFO_EXTENSION));
+                                $isImage = in_array($extension, ['jpg', 'jpeg', 'png', 'gif']);
+                                $isPdf = $extension === 'pdf';
+                            @endphp
+                            
+                            <div class="mb-3">
+                                <a href="{{ Storage::url($payroll->file_path) }}" target="_blank" class="btn btn-info btn-sm">
+                                    <i class="fas fa-download"></i> Download {{ basename($payroll->file_path) }}
+                                </a>
+                                @if($isImage || $isPdf)
+                                    <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#filePreviewModal">
+                                        <i class="fas fa-eye"></i> Preview
+                                    </button>
+                                @endif
+                            </div>
+                            
+                            @if($isImage)
+                                <!-- Image Preview -->
+                                <div class="text-center">
+                                    <img src="{{ Storage::url($payroll->file_path) }}" alt="File Preview" class="img-fluid" style="max-height: 300px; cursor: pointer;" data-toggle="modal" data-target="#filePreviewModal">
+                                </div>
+                            @elseif($isPdf)
+                                <!-- PDF Preview -->
+                                <div class="embed-responsive embed-responsive-16by9" style="height: 400px;">
+                                    <iframe class="embed-responsive-item" src="{{ Storage::url($payroll->file_path) }}" allowfullscreen></iframe>
+                                </div>
+                            @else
+                                <!-- Other file types -->
+                                <div class="alert alert-info">
+                                    <i class="fas fa-file"></i> File {{ strtoupper($extension) }} - Klik download untuk melihat
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
+
+            <!-- File Preview Modal -->
+            @if($payroll->file_path)
+                @php
+                    $extension = strtolower(pathinfo($payroll->file_path, PATHINFO_EXTENSION));
+                    $isImage = in_array($extension, ['jpg', 'jpeg', 'png', 'gif']);
+                    $isPdf = $extension === 'pdf';
+                @endphp
+                
+                @if($isImage || $isPdf)
+                <div class="modal fade" id="filePreviewModal" tabindex="-1" role="dialog" aria-labelledby="filePreviewModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="filePreviewModalLabel">Preview File: {{ basename($payroll->file_path) }}</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body text-center">
+                                @if($isImage)
+                                    <img src="{{ Storage::url($payroll->file_path) }}" alt="File Preview" class="img-fluid" style="max-width: 100%;">
+                                @elseif($isPdf)
+                                    <div class="embed-responsive embed-responsive-16by9" style="height: 600px;">
+                                        <iframe class="embed-responsive-item" src="{{ Storage::url($payroll->file_path) }}" allowfullscreen></iframe>
+                                    </div>
+                                @endif
+                            </div>
+                            <div class="modal-footer">
+                                <a href="{{ Storage::url($payroll->file_path) }}" target="_blank" class="btn btn-info">
+                                    <i class="fas fa-download"></i> Download
+                                </a>
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @endif
             @endif
 
             <div class="row mt-3">
@@ -117,13 +210,15 @@
                     <i class="fas fa-check"></i> Tandai Sebagai Dibayar
                 </button>
             @endif
-            <form action="{{ route('payrolls.destroy', $payroll) }}" method="POST" style="display: inline-block;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data payroll ini?');">
-                @csrf
-                @method('DELETE')
-                <button type="submit" class="btn btn-danger">
-                    <i class="fas fa-trash"></i> Hapus
-                </button>
-            </form>
+            @if(auth()->user()->role->nama === 'owner')
+                <form action="{{ route('payrolls.destroy', $payroll) }}" method="POST" style="display: inline-block;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data payroll ini?');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Hapus
+                    </button>
+                </form>
+            @endif
         </div>
     </div>
 
@@ -151,8 +246,8 @@
                             <input type="text" class="form-control" value="Rp {{ number_format($payroll->total_gaji, 0, ',', '.') }}" readonly>
                         </div>
                         <div class="form-group">
-                            <label for="tanggal_bayar">Tanggal Bayar <span class="text-danger">*</span></label>
-                            <input type="date" name="tanggal_bayar" class="form-control" value="{{ date('Y-m-d') }}" required>
+                            <label for="tanggal_bayar">Tanggal & Waktu Bayar <span class="text-danger">*</span></label>
+                            <input type="datetime-local" name="tanggal_bayar" class="form-control" value="{{ date('Y-m-d\TH:i') }}" required>
                         </div>
                     </div>
                     <div class="modal-footer">

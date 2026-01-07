@@ -66,8 +66,16 @@ Route::middleware('auth')->group(function () {
     Route::resource('employees', App\Http\Controllers\EmployeeController::class);
 
     // Payrolls
+    Route::get('payrolls/{payroll}/print', [App\Http\Controllers\PayrollController::class, 'printSlip'])->name('payrolls.print');
     Route::put('payrolls/{payroll}/mark-paid', [App\Http\Controllers\PayrollController::class, 'markAsPaid'])->name('payrolls.mark-paid');
-    Route::resource('payrolls', App\Http\Controllers\PayrollController::class);
+    
+    // Payroll routes with role restriction (only owner can edit/update/destroy)
+    Route::get('payrolls/{payroll}/edit', [App\Http\Controllers\PayrollController::class, 'edit'])->name('payrolls.edit')->middleware('role:owner');
+    Route::put('payrolls/{payroll}', [App\Http\Controllers\PayrollController::class, 'update'])->name('payrolls.update')->middleware('role:owner');
+    Route::delete('payrolls/{payroll}', [App\Http\Controllers\PayrollController::class, 'destroy'])->name('payrolls.destroy')->middleware('role:owner');
+    
+    // Other payroll routes
+    Route::resource('payrolls', App\Http\Controllers\PayrollController::class)->except(['edit', 'update', 'destroy']);
 
     // Addon Transactions (specific routes BEFORE resource to avoid conflicts)
     Route::get('addon-transactions/consumer/{consumer}/active-room', [App\Http\Controllers\AddonTransactionController::class, 'consumerActiveRoom'])

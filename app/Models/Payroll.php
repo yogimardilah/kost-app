@@ -10,6 +10,7 @@ class Payroll extends Model
     use HasFactory;
 
     protected $fillable = [
+        'slip_number',
         'employee_id',
         'bulan',
         'tahun',
@@ -20,10 +21,11 @@ class Payroll extends Model
         'tanggal_bayar',
         'status',
         'keterangan',
+        'file_path',
     ];
 
     protected $casts = [
-        'tanggal_bayar' => 'date',
+        'tanggal_bayar' => 'datetime',
         'gaji_pokok' => 'decimal:2',
         'bonus' => 'decimal:2',
         'potongan' => 'decimal:2',

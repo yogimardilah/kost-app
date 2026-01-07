@@ -111,7 +111,24 @@ class ReportController extends Controller
 
         // Get expenses from payrolls
         $payrollQuery = \App\Models\Payroll::with('employee')
-            ->selectRaw("'payroll' as type, id, CONCAT('Gaji ', (SELECT nama FROM employees WHERE id = payrolls.employee_id)) as reference, COALESCE(tanggal_bayar, created_at) as transaction_date, total_gaji as amount, 'expense' as status, NULL as consumer_id, NULL as room_id, CONCAT(bulan, '/', tahun) as description, NULL as periode_awal, NULL as periode_akhir");
+            ->selectRaw("'payroll' as type, id, slip_number as reference, COALESCE(tanggal_bayar, created_at) as transaction_date, total_gaji as amount, 'expense' as status, NULL as consumer_id, NULL as room_id, 
+                CONCAT('Gaji Periode ', 
+                    CASE bulan
+                        WHEN 1 THEN 'Januari'
+                        WHEN 2 THEN 'Februari'
+                        WHEN 3 THEN 'Maret'
+                        WHEN 4 THEN 'April'
+                        WHEN 5 THEN 'Mei'
+                        WHEN 6 THEN 'Juni'
+                        WHEN 7 THEN 'Juli'
+                        WHEN 8 THEN 'Agustus'
+                        WHEN 9 THEN 'September'
+                        WHEN 10 THEN 'Oktober'
+                        WHEN 11 THEN 'November'
+                        WHEN 12 THEN 'Desember'
+                    END, 
+                    ' ', tahun
+                ) as description, NULL as periode_awal, NULL as periode_akhir");
 
         if ($request->filled('search')) {
             $search = $request->search;
