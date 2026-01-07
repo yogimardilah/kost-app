@@ -19,6 +19,9 @@ class StoreConsumerRequest extends FormRequest
             'no_hp' => 'required|string|max:20',
             'kendaraan' => 'nullable|string|max:255',
             'tanda_pengenal' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'kontak_darurat_nama' => 'nullable|string|max:255',
+            'kontak_darurat_hubungan' => 'nullable|string|max:100',
+            'kontak_darurat_no_hp' => 'nullable|string|max:20',
         ];
     }
 

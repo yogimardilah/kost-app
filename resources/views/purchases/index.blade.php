@@ -1,9 +1,9 @@
 @extends('layouts.app')
 
-@section('title', 'Daftar Pembelian/Ops')
+@section('title', 'Daftar Operasional')
 
 @section('content_header')
-    <h1>Daftar Pembelian/Ops</h1>
+    <h1>Daftar Operasional</h1>
 @endsection
 
 @section('content')
@@ -79,7 +79,7 @@
             @endif
 
             @if($purchases->isEmpty())
-                <div class="alert alert-info">Belum ada data pembelian.</div>
+                <div class="alert alert-info">Belum ada data operasional.</div>
             @else
                 <div class="table-responsive">
                     <table class="table table-bordered table-striped table-hover">

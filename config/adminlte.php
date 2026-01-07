@@ -313,6 +313,7 @@ return [
                 ['text' => 'Data Kost', 'url' => 'kost', 'icon' => 'fas fa-building', 'menu_code' => 'kost'],
                 ['text' => 'Kamar', 'url' => 'rooms', 'icon' => 'fas fa-door-closed', 'menu_code' => 'rooms'],
                 ['text' => 'Room Addons', 'url' => 'addons', 'icon' => 'fas fa-puzzle-piece', 'menu_code' => 'addons'],
+                ['text' => 'Data Karyawan', 'url' => 'employees', 'icon' => 'fas fa-user-tie', 'menu_code' => 'employees'],
             ],
         ],
         [
@@ -325,7 +326,8 @@ return [
                 ['text' => 'Billings', 'url' => 'billings', 'icon' => 'fas fa-file-invoice', 'menu_code' => 'billings'],
                 ['text' => 'Payments', 'url' => 'payments', 'icon' => 'fas fa-credit-card', 'menu_code' => 'payments'],
                 ['text' => 'Transaksi Addon', 'url' => 'addon-transactions', 'icon' => 'fas fa-puzzle-piece', 'menu_code' => 'addon_transactions'],
-                ['text' => 'Pembelian/Ops', 'url' => 'purchases', 'icon' => 'fas fa-shopping-cart', 'menu_code' => 'purchases'],
+                ['text' => 'Operasional', 'url' => 'purchases', 'icon' => 'fas fa-shopping-cart', 'menu_code' => 'purchases'],
+                ['text' => 'Payroll', 'url' => 'payrolls', 'icon' => 'fas fa-money-check-alt', 'menu_code' => 'payrolls'],
             ],
         ],
         [

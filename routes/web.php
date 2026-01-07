@@ -62,6 +62,13 @@ Route::middleware('auth')->group(function () {
     Route::get('reports/revenue-monthly', [App\Http\Controllers\ReportController::class, 'revenueMonthly'])->name('reports.revenue-monthly');
     Route::get('reports/traffic', [App\Http\Controllers\ReportController::class, 'traffic'])->name('reports.traffic');
 
+    // Employees
+    Route::resource('employees', App\Http\Controllers\EmployeeController::class);
+
+    // Payrolls
+    Route::put('payrolls/{payroll}/mark-paid', [App\Http\Controllers\PayrollController::class, 'markAsPaid'])->name('payrolls.mark-paid');
+    Route::resource('payrolls', App\Http\Controllers\PayrollController::class);
+
     // Addon Transactions (specific routes BEFORE resource to avoid conflicts)
     Route::get('addon-transactions/consumer/{consumer}/active-room', [App\Http\Controllers\AddonTransactionController::class, 'consumerActiveRoom'])
         ->name('addon-transactions.consumer-active-room');

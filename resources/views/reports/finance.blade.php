@@ -18,7 +18,7 @@
     <div class="card-header no-print">
         <form method="GET" class="form-inline">
             <div class="form-group mr-2 mb-2">
-                <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Cari invoice/penyewa/NIK/kamar">
+                <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Cari transaksi...">
             </div>
             <div class="form-group mr-2 mb-2">
                 <input type="date" name="start_date" value="{{ request('start_date') }}" class="form-control" placeholder="Tanggal Invoice (Dari)">
@@ -43,7 +43,7 @@
 
     <div class="card-body">
         <div class="row mb-3">
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="info-box">
                     <span class="info-box-icon bg-primary"><i class="fas fa-file-invoice"></i></span>
                     <div class="info-box-content">
@@ -53,23 +53,65 @@
                 </div>
             </div>
 
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="info-box">
                     <span class="info-box-icon bg-success"><i class="fas fa-money-bill-wave"></i></span>
                     <div class="info-box-content">
-                        <span class="info-box-text">Total Pembayaran</span>
+                        <span class="info-box-text">Total Pendapatan</span>
                         <span class="info-box-number">Rp {{ number_format($totalPaid ?? 0,0,',','.') }}</span>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="info-box">
-                    <span class="info-box-icon bg-danger"><i class="fas fa-exclamation-circle"></i></span>
+                    <span class="info-box-icon bg-warning"><i class="fas fa-shopping-cart"></i></span>
                     <div class="info-box-content">
-                        <span class="info-box-text">Selisih Tagihan</span>
-                        <span class="info-box-number">Rp {{ number_format($outstanding ?? 0,0,',','.') }}</span>
+                        <span class="info-box-text">Operasional</span>
+                        <span class="info-box-number">Rp {{ number_format($totalExpenses ?? 0,0,',','.') }}</span>
                     </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="info-box">
+                    <span class="info-box-icon bg-warning"><i class="fas fa-money-check-alt"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Payroll</span>
+                        <span class="info-box-number">Rp {{ number_format($totalPayroll ?? 0,0,',','.') }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <div class="info-box">
+                    <span class="info-box-icon bg-danger"><i class="fas fa-minus-circle"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Total Pengeluaran (Ops + Payroll)</span>
+                        <span class="info-box-number">Rp {{ number_format(($totalExpenses ?? 0) + ($totalPayroll ?? 0),0,',','.') }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="info-box">
+                    <span class="info-box-icon {{ ($netIncome ?? 0) >= 0 ? 'bg-success' : 'bg-danger' }}"><i class="fas fa-chart-line"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Laba Bersih</span>
+                        <span class="info-box-number">Rp {{ number_format($netIncome ?? 0,0,',','.') }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-12">
+                <div class="alert alert-danger">
+                    <strong><i class="fas fa-exclamation-triangle"></i> Tagihan Belum Dibayar:</strong> 
+                    Rp {{ number_format($outstanding ?? 0,0,',','.') }}
+                    <span class="ml-2 text-sm">(Piutang yang perlu ditagih)</span>
                 </div>
             </div>
         </div>
@@ -79,55 +121,78 @@
                 <thead>
                     <tr>
                         <th>No</th>
-                        <th>Invoice</th>
-                        <th>Penyewa</th>
-                        <th>NIK</th>
-                        <th>Kamar</th>
-                        <th>Periode</th>
-                        <th>Total Tagihan</th>
-                        <th>Total Dibayar</th>
-                        <th>Sisa</th>
+                        <th>Tanggal</th>
+                        <th>Tipe</th>
+                        <th>Referensi</th>
+                        <th>Keterangan</th>
+                        <th>Pendapatan</th>
+                        <th>Pengeluaran</th>
                         <th>Status</th>
                         <th class="no-print">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($billings as $i => $b)
-                        @php
-                            $paid = $b->payments->sum('jumlah');
-                            $left = ($b->total_tagihan ?? 0) - $paid;
-                        @endphp
+                    @forelse($transactions as $i => $t)
                         <tr>
-                            <td>{{ $billings->firstItem() + $i }}</td>
-                            <td>{{ $b->invoice_number ?? '-' }}</td>
-                            <td>{{ $b->consumer->nama ?? '-' }}</td>
-                            <td>{{ $b->consumer->nik ?? '-' }}</td>
-                            <td>{{ $b->room->nomor_kamar ?? '-' }}</td>
+                            <td>{{ $transactions->firstItem() + $i }}</td>
+                            <td>{{ \Carbon\Carbon::parse($t->transaction_date)->format('d/m/Y') }}</td>
                             <td>
-                                {{ $b->periode_awal ? \Carbon\Carbon::parse($b->periode_awal)->format('d/m/Y') : '-' }}
-                                -
-                                {{ $b->periode_akhir ? \Carbon\Carbon::parse($b->periode_akhir)->format('d/m/Y') : '-' }}
-                            </td>
-                            <td>Rp {{ number_format($b->total_tagihan ?? 0,0,',','.') }}</td>
-                            <td>Rp {{ number_format($paid,0,',','.') }}</td>
-                            <td>Rp {{ number_format($left,0,',','.') }}</td>
-                            <td>
-                                @if($b->status === 'lunas')
-                                    <span class="badge badge-success">Lunas</span>
-                                @elseif($b->status === 'sebagian')
-                                    <span class="badge badge-warning">Sebagian</span>
+                                @if($t->type === 'billing')
+                                    <span class="badge badge-primary">Tagihan</span>
+                                @elseif($t->type === 'payroll')
+                                    <span class="badge badge-info">Payroll</span>
                                 @else
-                                    <span class="badge badge-danger">Pending</span>
+                                    <span class="badge badge-warning">Operasional</span>
+                                @endif
+                            </td>
+                            <td>{{ $t->reference ?? '-' }}</td>
+                            <td>
+                                @if($t->type === 'billing')
+                                    {{ $t->periode_awal && $t->periode_akhir ? \Carbon\Carbon::parse($t->periode_awal)->format('d/m/Y') . ' - ' . \Carbon\Carbon::parse($t->periode_akhir)->format('d/m/Y') : '-' }}
+                                @else
+                                    {{ $t->description ?? '-' }}
+                                @endif
+                            </td>
+                            <td class="text-success">
+                                @if($t->type === 'billing')
+                                    Rp {{ number_format($t->amount ?? 0,0,',','.') }}
+                                @else
+                                    -
+                                @endif
+                            </td>
+                            <td class="text-danger">
+                                @if($t->type === 'purchase' || $t->type === 'payroll')
+                                    Rp {{ number_format($t->amount ?? 0,0,',','.') }}
+                                @else
+                                    -
+                                @endif
+                            </td>
+                            <td>
+                                @if($t->type === 'billing')
+                                    @if($t->status === 'lunas')
+                                        <span class="badge badge-success">Lunas</span>
+                                    @elseif($t->status === 'sebagian')
+                                        <span class="badge badge-warning">Sebagian</span>
+                                    @else
+                                        <span class="badge badge-danger">Pending</span>
+                                    @endif
+                                @else
+                                    <span class="badge badge-secondary">-</span>
                                 @endif
                             </td>
                             <td class="no-print">
-                                <a href="{{ route('billings.show', $b) }}" class="btn btn-sm btn-info">Lihat</a>
-                                <a href="{{ route('billings.downloadInvoice', $b) }}" class="btn btn-sm btn-primary">Download</a>
+                                @if($t->type === 'billing')
+                                    <a href="{{ route('billings.show', $t->id) }}" class="btn btn-sm btn-info">Lihat</a>
+                                @elseif($t->type === 'payroll')
+                                    <a href="{{ route('payrolls.show', $t->id) }}" class="btn btn-sm btn-info">Lihat</a>
+                                @else
+                                    <a href="{{ route('purchases.edit', $t->id) }}" class="btn btn-sm btn-info">Lihat</a>
+                                @endif
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="11" class="text-center">Belum ada data tagihan.</td>
+                            <td colspan="9" class="text-center">Belum ada data transaksi.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -136,10 +201,10 @@
 
         <div class="d-flex justify-content-between align-items-center no-print">
             <div>
-                Menampilkan {{ $billings->firstItem() }} - {{ $billings->lastItem() }} dari {{ $billings->total() }} data
+                Menampilkan {{ $transactions->firstItem() }} - {{ $transactions->lastItem() }} dari {{ $transactions->total() }} data
             </div>
             <div>
-                {{ $billings->appends(request()->query())->links() }}
+                {{ $transactions->appends(request()->query())->links() }}
             </div>
         </div>
     </div>

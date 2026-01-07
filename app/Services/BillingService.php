@@ -37,7 +37,7 @@ class BillingService
             'status'          => 'pending',
         ]);
 
-        // Add room rent as first billing detail (daily vs monthly)
+        // Add room rent as first billing detail (daily vs monthly with proration)
         $roomMonthly = $occupancy->room->harga ?? 0;
         $roomDaily = $occupancy->room->harga_harian ?? null;
         $useDaily = $roomDaily && $days < 30;
@@ -55,15 +55,20 @@ class BillingService
             ]);
             $totalTagihan += $subtotal;
         } elseif ($roomMonthly > 0) {
-            $unit = (int) $roomMonthly;
+            // Prorate monthly price based on actual days in the running month
+            $daysInMonth = $start->daysInMonth;
+            $hargaPerHari = $roomMonthly / $daysInMonth;
+            $subtotalRaw = $hargaPerHari * $days;
+            $subtotal = (int) (round($subtotalRaw / 100) * 100);
+            
             BillingDetail::create([
                 'billing_id'  => $billing->id,
-                'keterangan'  => 'Sewa Kamar ' . ($occupancy->room->nomor_kamar ?? '-') . ' - Bulanan (30 hari)',
-                'qty'         => 1,
-                'harga'       => $unit,
-                'subtotal'    => $unit,
+                'keterangan'  => 'Sewa Kamar ' . ($occupancy->room->nomor_kamar ?? '-') . ' - Bulanan (Prorate: ' . $days . ' hari dari ' . $daysInMonth . ' hari)',
+                'qty'         => $days,
+                'harga'       => (int) round($hargaPerHari),
+                'subtotal'    => $subtotal,
             ]);
-            $totalTagihan += $unit;
+            $totalTagihan += $subtotal;
         }
 
         // Add addons as billing details

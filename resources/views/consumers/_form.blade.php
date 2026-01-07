@@ -33,6 +33,38 @@
         @error('kendaraan') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
     </div>
 
+    <div class="card mb-3">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0"><i class="fas fa-phone-square"></i> Kontak Darurat</h5>
+        </div>
+        <div class="card-body">
+            <div class="form-group mb-3">
+                <label for="kontak_darurat_nama">Nama Kontak Darurat</label>
+                <input type="text" name="kontak_darurat_nama" id="kontak_darurat_nama" class="form-control @error('kontak_darurat_nama') is-invalid @enderror" value="{{ old('kontak_darurat_nama', $consumer->kontak_darurat_nama ?? '') }}" placeholder="Contoh: Budi Santoso">
+                @error('kontak_darurat_nama') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="kontak_darurat_hubungan">Hubungan</label>
+                <select name="kontak_darurat_hubungan" id="kontak_darurat_hubungan" class="form-control @error('kontak_darurat_hubungan') is-invalid @enderror">
+                    <option value="">-- Pilih Hubungan --</option>
+                    <option value="Orang Tua" {{ old('kontak_darurat_hubungan', $consumer->kontak_darurat_hubungan ?? '') == 'Orang Tua' ? 'selected' : '' }}>Orang Tua</option>
+                    <option value="Saudara" {{ old('kontak_darurat_hubungan', $consumer->kontak_darurat_hubungan ?? '') == 'Saudara' ? 'selected' : '' }}>Saudara</option>
+                    <option value="Suami/Istri" {{ old('kontak_darurat_hubungan', $consumer->kontak_darurat_hubungan ?? '') == 'Suami/Istri' ? 'selected' : '' }}>Suami/Istri</option>
+                    <option value="Teman" {{ old('kontak_darurat_hubungan', $consumer->kontak_darurat_hubungan ?? '') == 'Teman' ? 'selected' : '' }}>Teman</option>
+                    <option value="Lainnya" {{ old('kontak_darurat_hubungan', $consumer->kontak_darurat_hubungan ?? '') == 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
+                </select>
+                @error('kontak_darurat_hubungan') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+            </div>
+
+            <div class="form-group mb-0">
+                <label for="kontak_darurat_no_hp">No. HP Kontak Darurat</label>
+                <input type="text" name="kontak_darurat_no_hp" id="kontak_darurat_no_hp" class="form-control @error('kontak_darurat_no_hp') is-invalid @enderror" value="{{ old('kontak_darurat_no_hp', $consumer->kontak_darurat_no_hp ?? '') }}" placeholder="Contoh: 08123456789">
+                @error('kontak_darurat_no_hp') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+            </div>
+        </div>
+    </div>
+
     <div class="form-group mb-3">
         <label for="tanda_pengenal">Tanda Pengenal (KTP/SIM/Passport)</label>
         <input type="file" name="tanda_pengenal" id="tanda_pengenal" class="form-control @error('tanda_pengenal') is-invalid @enderror" accept="image/*,.pdf" onchange="previewFile(this)">

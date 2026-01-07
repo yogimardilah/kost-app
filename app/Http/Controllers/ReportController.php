@@ -61,12 +61,14 @@ class ReportController extends Controller
      */
     public function finance(Request $request)
     {
-        $query = Billing::with(['room','consumer','payments']);
+        // Get income from billings
+        $billingQuery = Billing::with(['room','consumer','payments'])
+            ->selectRaw("'billing' as type, id, invoice_number as reference, created_at as transaction_date, total_tagihan as amount, status, consumer_id, room_id, NULL as description, periode_awal, periode_akhir");
 
         // Search by invoice, room number, consumer name or NIK
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $billingQuery->where(function($q) use ($search) {
                 $q->where('invoice_number', 'LIKE', "%{$search}%")
                   ->orWhereHas('room', function($r) use ($search) {
                       $r->where('nomor_kamar', 'LIKE', "%{$search}%");
@@ -80,37 +82,138 @@ class ReportController extends Controller
 
         // Date range by invoice date (created_at)
         if ($request->filled('start_date')) {
-            $query->whereDate('created_at', '>=', $request->start_date);
+            $billingQuery->whereDate('created_at', '>=', $request->start_date);
         }
         if ($request->filled('end_date')) {
-            $query->whereDate('created_at', '<=', $request->end_date);
+            $billingQuery->whereDate('created_at', '<=', $request->end_date);
         }
 
         // Status filter (pending, sebagian, lunas)
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            $billingQuery->where('status', $request->status);
         }
 
-        $query->orderBy('created_at','desc');
+        // Get expenses from purchases
+        $purchaseQuery = \App\Models\Purchase::query()
+            ->selectRaw("'purchase' as type, id, description as reference, purchase_date as transaction_date, amount, 'expense' as status, NULL as consumer_id, NULL as room_id, category as description, NULL as periode_awal, NULL as periode_akhir");
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $purchaseQuery->where('description', 'LIKE', "%{$search}%");
+        }
+
+        if ($request->filled('start_date')) {
+            $purchaseQuery->whereDate('purchase_date', '>=', $request->start_date);
+        }
+        if ($request->filled('end_date')) {
+            $purchaseQuery->whereDate('purchase_date', '<=', $request->end_date);
+        }
+
+        // Get expenses from payrolls
+        $payrollQuery = \App\Models\Payroll::with('employee')
+            ->selectRaw("'payroll' as type, id, CONCAT('Gaji ', (SELECT nama FROM employees WHERE id = payrolls.employee_id)) as reference, COALESCE(tanggal_bayar, created_at) as transaction_date, total_gaji as amount, 'expense' as status, NULL as consumer_id, NULL as room_id, CONCAT(bulan, '/', tahun) as description, NULL as periode_awal, NULL as periode_akhir");
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $payrollQuery->whereHas('employee', function($q) use ($search) {
+                $q->where('nama', 'LIKE', "%{$search}%")
+                  ->orWhere('nik', 'LIKE', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('start_date')) {
+            $payrollQuery->where(function($q) use ($request) {
+                $q->whereDate('tanggal_bayar', '>=', $request->start_date)
+                  ->orWhere(function($sub) use ($request) {
+                      $sub->whereNull('tanggal_bayar')
+                          ->whereDate('created_at', '>=', $request->start_date);
+                  });
+            });
+        }
+        if ($request->filled('end_date')) {
+            $payrollQuery->where(function($q) use ($request) {
+                $q->whereDate('tanggal_bayar', '<=', $request->end_date)
+                  ->orWhere(function($sub) use ($request) {
+                      $sub->whereNull('tanggal_bayar')
+                          ->whereDate('created_at', '<=', $request->end_date);
+                  });
+            });
+        }
+
+        // Only show paid payrolls
+        $payrollQuery->where('status', 'dibayar');
+
+        // Combine all queries
+        $query = $billingQuery->union($purchaseQuery)->union($payrollQuery);
 
         // Export to Excel
         if ($request->has('export') && $request->export === 'excel') {
-            return $this->exportFinanceExcel($query->get());
+            $allData = \DB::table(\DB::raw("(({$billingQuery->toSql()}) UNION ({$purchaseQuery->toSql()}) UNION ({$payrollQuery->toSql()})) as combined"))
+                ->mergeBindings($billingQuery->getQuery())
+                ->mergeBindings($purchaseQuery->getQuery())
+                ->mergeBindings($payrollQuery->getQuery())
+                ->orderBy('transaction_date', 'desc')
+                ->get();
+            return $this->exportFinanceExcel($allData);
         }
 
-        // Totals across filtered dataset
-        $allForTotals = (clone $query)->get();
-        $totalBilled = $allForTotals->sum('total_tagihan');
-        $totalPaid = $allForTotals->sum(function($b) { return $b->payments->sum('jumlah'); });
+        // Calculate totals
+        $allBillings = Billing::query();
+        $allPurchases = \App\Models\Purchase::query();
+        $allPayrolls = \App\Models\Payroll::where('status', 'dibayar');
+        
+        if ($request->filled('start_date')) {
+            $allBillings->whereDate('created_at', '>=', $request->start_date);
+            $allPurchases->whereDate('purchase_date', '>=', $request->start_date);
+            $allPayrolls->where(function($q) use ($request) {
+                $q->whereDate('tanggal_bayar', '>=', $request->start_date)
+                  ->orWhere(function($sub) use ($request) {
+                      $sub->whereNull('tanggal_bayar')
+                          ->whereDate('created_at', '>=', $request->start_date);
+                  });
+            });
+        }
+        if ($request->filled('end_date')) {
+            $allBillings->whereDate('created_at', '<=', $request->end_date);
+            $allPurchases->whereDate('purchase_date', '<=', $request->end_date);
+            $allPayrolls->where(function($q) use ($request) {
+                $q->whereDate('tanggal_bayar', '<=', $request->end_date)
+                  ->orWhere(function($sub) use ($request) {
+                      $sub->whereNull('tanggal_bayar')
+                          ->whereDate('created_at', '<=', $request->end_date);
+                  });
+            });
+        }
+        if ($request->filled('status')) {
+            $allBillings->where('status', $request->status);
+            $allPayrolls->whereHas('employee', function($q) use ($search) {
+                $q->where('nama', 'LIKE', "%{$search}%")
+                  ->orWhere('nik', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $totalBilled = $allBillings->sum('total_tagihan');
+        $totalPaid = \DB::table('payments')
+            ->whereIn('billing_id', $allBillings->pluck('id'))
+            ->sum('jumlah');
+        $totalExpenses = $allPurchases->sum('amount');
+        $totalPayroll = $allPayrolls->sum('total_gaji');
         $outstanding = $totalBilled - $totalPaid;
+        $netIncome = $totalPaid - $totalExpenses - $totalPayroll;
 
-        // Paginate for table
-        $billings = $query->paginate(20)->withQueryString();
+        // Paginate combined results
+        $transactions = \DB::table(\DB::raw("(({$billingQuery->toSql()}) UNION ({$purchaseQuery->toSql()}) UNION ({$payrollQuery->toSql()})) as combined"))
+            ->mergeBindings($billingQuery->getQuery())
+            ->mergeBindings($purchaseQuery->getQuery())
+            ->mergeBindings($payrollQuery->getQuery())
+            ->orderBy('transaction_date', 'desc')
+            ->paginate(20)
+            ->withQueryString();
 
-        return view('reports.finance', compact('billings', 'totalBilled', 'totalPaid', 'outstanding'));
+        return view('reports.finance', compact('transactions', 'totalBilled', 'totalPaid', 'totalExpenses', 'totalPayroll', 'outstanding', 'netIncome'));
     }
 
-    private function exportFinanceExcel($billings)
+    private function exportFinanceExcel($transactions)
     {
         $filename = 'laporan-keuangan-' . date('Y-m-d') . '.xls';
 
@@ -122,7 +225,7 @@ class ReportController extends Controller
             'Expires' => '0',
         ];
 
-        $callback = function() use ($billings) {
+        $callback = function() use ($transactions) {
             echo '<html xmlns:x="urn:schemas-microsoft-com:office:excel">';
             echo '<head>';
             echo '<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />';
@@ -136,39 +239,33 @@ class ReportController extends Controller
             echo '<thead>';
             echo '<tr style="background-color: #4CAF50; color: white; font-weight: bold;">';
             echo '<th>No</th>';
-            echo '<th>Invoice</th>';
-            echo '<th>Penyewa</th>';
-            echo '<th>NIK</th>';
-            echo '<th>Kamar</th>';
-            echo '<th>Periode Awal</th>';
-            echo '<th>Periode Akhir</th>';
-            echo '<th>Total Tagihan</th>';
-            echo '<th>Total Pembayaran</th>';
-            echo '<th>Sisa</th>';
+            echo '<th>Tanggal</th>';
+            echo '<th>Tipe</th>';
+            echo '<th>Referensi</th>';
+            echo '<th>Keterangan</th>';
+            echo '<th>Pendapatan</th>';
+            echo '<th>Pengeluaran</th>';
             echo '<th>Status</th>';
             echo '</tr>';
             echo '</thead>';
             echo '<tbody>';
 
-            foreach ($billings as $i => $b) {
-                $paid = $b->payments->sum('jumlah');
-                $left = ($b->total_tagihan ?? 0) - $paid;
-                $nik = $b->consumer->nik ?? '-';
-                $periodeAwal = $b->periode_awal ? Carbon::parse($b->periode_awal)->format('d/m/Y') : '-';
-                $periodeAkhir = $b->periode_akhir ? Carbon::parse($b->periode_akhir)->format('d/m/Y') : '-';
+            foreach ($transactions as $i => $t) {
+                $date = Carbon::parse($t->transaction_date)->format('d/m/Y');
+                $tipe = $t->type === 'billing' ? 'Tagihan' : 'Operasional';
+                $pendapatan = $t->type === 'billing' ? (int)$t->amount : 0;
+                $pengeluaran = $t->type === 'purchase' ? (int)$t->amount : 0;
+                $keterangan = $t->type === 'billing' ? ($t->periode_awal && $t->periode_akhir ? Carbon::parse($t->periode_awal)->format('d/m/Y') . ' - ' . Carbon::parse($t->periode_akhir)->format('d/m/Y') : '-') : ($t->description ?? '-');
 
                 echo '<tr>';
                 echo '<td>' . ($i + 1) . '</td>';
-                echo '<td>' . ($b->invoice_number ?? '-') . '</td>';
-                echo '<td>' . ($b->consumer->nama ?? '-') . '</td>';
-                echo '<td style="mso-number-format:\'\@\';">' . $nik . '</td>';
-                echo '<td>' . ($b->room->nomor_kamar ?? '-') . '</td>';
-                echo '<td>' . $periodeAwal . '</td>';
-                echo '<td>' . $periodeAkhir . '</td>';
-                echo '<td>' . (is_null($b->total_tagihan) ? 0 : (int)$b->total_tagihan) . '</td>';
-                echo '<td>' . (int)$paid . '</td>';
-                echo '<td>' . (int)$left . '</td>';
-                echo '<td>' . ucfirst($b->status ?? '-') . '</td>';
+                echo '<td>' . $date . '</td>';
+                echo '<td>' . $tipe . '</td>';
+                echo '<td>' . ($t->reference ?? '-') . '</td>';
+                echo '<td>' . $keterangan . '</td>';
+                echo '<td>' . $pendapatan . '</td>';
+                echo '<td>' . $pengeluaran . '</td>';
+                echo '<td>' . ucfirst($t->status ?? '-') . '</td>';
                 echo '</tr>';
             }
 

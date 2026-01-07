@@ -100,7 +100,7 @@ class PurchaseController extends Controller
             // HTML table is the simplest Excel-compatible format with proper column alignment
             echo '\xEF\xBB\xBF'; // UTF-8 BOM
             echo '<html><head><meta charset="UTF-8"><style>table { border-collapse: collapse; } td, th { border:1px solid #000; padding:4px; }</style></head><body>';
-            echo '<h3>Daftar Pembelian/Ops</h3>';
+            echo '<h3>Daftar Operasional</h3>';
             echo '<table>'; 
             echo '<thead><tr>'
                 . '<th>No</th>'
@@ -195,7 +195,7 @@ class PurchaseController extends Controller
 
         $purchase->save();
 
-        return redirect()->route('purchases.index')->with('success', 'Pembelian berhasil ditambahkan');
+        return redirect()->route('purchases.index')->with('success', 'Operasional berhasil ditambahkan');
     }
 
     public function edit(Purchase $purchase)
@@ -265,7 +265,7 @@ class PurchaseController extends Controller
 
         $purchase->save();
 
-        return redirect()->route('purchases.index')->with('success', 'Pembelian berhasil diperbarui');
+        return redirect()->route('purchases.index')->with('success', 'Operasional berhasil diperbarui');
     }
 
     public function destroy(Purchase $purchase)
@@ -274,6 +274,6 @@ class PurchaseController extends Controller
         $purchase->save();
         $purchase->delete();
 
-        return redirect()->route('purchases.index')->with('success', 'Pembelian berhasil dihapus');
+        return redirect()->route('purchases.index')->with('success', 'Operasional berhasil dihapus');
     }
 }

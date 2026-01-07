@@ -1,9 +1,9 @@
 @extends('layouts.app')
 
-@section('title', 'Edit Pembelian/Ops')
+@section('title', 'Edit Operasional')
 
 @section('content_header')
-    <h1>Edit Pembelian/Ops</h1>
+    <h1>Edit Operasional</h1>
 @endsection
 
 @section('content')

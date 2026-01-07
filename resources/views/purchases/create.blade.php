@@ -1,9 +1,9 @@
 @extends('layouts.app')
 
-@section('title', 'Tambah Pembelian/Ops')
+@section('title', 'Tambah Operasional')
 
 @section('content_header')
-    <h1>Tambah Pembelian/Ops</h1>
+    <h1>Tambah Operasional</h1>
 @endsection
 
 @section('content')

@@ -86,6 +86,34 @@
         <label for="tanggal_keluar">Tanggal Keluar</label>
         <input type="date" name="tanggal_keluar" id="tanggal_keluar" class="form-control @error('tanggal_keluar') is-invalid @enderror" value="{{ old('tanggal_keluar', $occupancy->tanggal_keluar ?? '') }}">
         @error('tanggal_keluar') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+        <small class="form-text text-muted">Tanggal keluar tidak boleh melewati tanggal 5 bulan berikutnya dari tanggal masuk.</small>
+    </div>
+
+    <!-- Price Calculation Display -->
+    <div id="price-calculation" class="alert alert-warning" style="display: none;">
+        <h6><strong id="calc-title">Perhitungan Harga</strong></h6>
+        <table class="table table-sm table-borderless mb-0">
+            <tr id="row-monthly-price">
+                <td width="180"><strong>Harga Bulanan:</strong></td>
+                <td id="calc-monthly-price">-</td>
+            </tr>
+            <tr id="row-daily-base-price" style="display: none;">
+                <td width="180"><strong>Harga Harian:</strong></td>
+                <td id="calc-daily-base-price">-</td>
+            </tr>
+            <tr>
+                <td><strong>Jumlah Hari:</strong></td>
+                <td id="calc-days">-</td>
+            </tr>
+            <tr>
+                <td><strong>Harga per Hari:</strong></td>
+                <td id="calc-daily-rate">-</td>
+            </tr>
+            <tr>
+                <td><strong>Total:</strong></td>
+                <td id="calc-total" style="font-weight: bold; color: #e74c3c;">-</td>
+            </tr>
+        </table>
     </div>
 
     <div class="form-group">
@@ -103,6 +131,7 @@
         const tanggalKeluar = document.getElementById('tanggal_keluar');
         const roomSelect = document.getElementById('room_id');
         const roomInfo = document.getElementById('room-info');
+        const priceCalc = document.getElementById('price-calculation');
 
         // Show room info when room is selected
         function updateRoomInfo() {
@@ -119,9 +148,110 @@
                 document.getElementById('info-fasilitas').textContent = fasilitas || '-';
                 
                 roomInfo.style.display = 'block';
+                calculatePriceProration();
             } else {
                 roomInfo.style.display = 'none';
+                priceCalc.style.display = 'none';
             }
+        }
+
+        // Calculate and display price calculation for both monthly and daily rental
+        function calculatePriceProration() {
+            const tipe = tipeSewa.value;
+            if (!tipe || !tanggalMasuk.value || !tanggalKeluar.value || !roomSelect.value) {
+                priceCalc.style.display = 'none';
+                return;
+            }
+
+            const selectedOption = roomSelect.options[roomSelect.selectedIndex];
+            const hargaStr = selectedOption.getAttribute('data-harga');
+            const hargaHarianStr = selectedOption.getAttribute('data-harga-harian');
+            const hargaBulanan = parseFloat(hargaStr.replace(/\./g, ''));
+            const hargaHarian = hargaHarianStr !== '-' ? parseFloat(hargaHarianStr.replace(/\./g, '')) : 0;
+
+            const masuk = new Date(tanggalMasuk.value);
+            const keluar = new Date(tanggalKeluar.value);
+            const diffTime = Math.abs(keluar - masuk);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays <= 0) {
+                priceCalc.style.display = 'none';
+                return;
+            }
+
+            if (tipe === 'bulanan') {
+                // Calculate actual days in the running month
+                const year = masuk.getFullYear();
+                const month = masuk.getMonth();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+                if (hargaBulanan > 0) {
+                    const hargaPerHari = hargaBulanan / daysInMonth;
+                    const totalProrate = hargaPerHari * diffDays;
+                    const totalProrateRounded = Math.round(totalProrate / 100) * 100;
+
+                    document.getElementById('calc-title').textContent = 'Perhitungan Harga (Bulanan - Prorate)';
+                    document.getElementById('row-monthly-price').style.display = '';
+                    document.getElementById('row-daily-base-price').style.display = 'none';
+                    document.getElementById('calc-monthly-price').textContent = 'Rp ' + hargaBulanan.toLocaleString('id-ID');
+                    document.getElementById('calc-days').textContent = diffDays + ' hari (dari ' + daysInMonth + ' hari)';
+                    document.getElementById('calc-daily-rate').textContent = 'Rp ' + Math.round(hargaPerHari).toLocaleString('id-ID');
+                    document.getElementById('calc-total').textContent = 'Rp ' + totalProrateRounded.toLocaleString('id-ID');
+                    
+                    priceCalc.style.display = 'block';
+                } else {
+                    priceCalc.style.display = 'none';
+                }
+            } else if (tipe === 'harian') {
+                if (hargaHarian > 0) {
+                    const totalHarian = hargaHarian * diffDays;
+                    const totalHarianRounded = Math.round(totalHarian / 100) * 100;
+
+                    document.getElementById('calc-title').textContent = 'Perhitungan Harga (Harian)';
+                    document.getElementById('row-monthly-price').style.display = 'none';
+                    document.getElementById('row-daily-base-price').style.display = '';
+                    document.getElementById('calc-daily-base-price').textContent = 'Rp ' + hargaHarian.toLocaleString('id-ID');
+                    document.getElementById('calc-days').textContent = diffDays + ' hari';
+                    document.getElementById('calc-daily-rate').textContent = 'Rp ' + hargaHarian.toLocaleString('id-ID');
+                    document.getElementById('calc-total').textContent = 'Rp ' + totalHarianRounded.toLocaleString('id-ID');
+                    
+                    priceCalc.style.display = 'block';
+                } else {
+                    priceCalc.style.display = 'none';
+                }
+            } else {
+                priceCalc.style.display = 'none';
+            }
+        }
+
+        // Validate checkout date doesn't exceed 5th of next applicable month
+        function validateCheckoutDate() {
+            if (!tanggalKeluar.value || !tanggalMasuk.value) return true;
+            
+            const masuk = new Date(tanggalMasuk.value);
+            const keluar = new Date(tanggalKeluar.value);
+            
+            // Calculate max checkout: 5th of next applicable month
+            let maxCheckout;
+            if (masuk.getDate() < 5) {
+                // If check-in before 5th, max is 5th of same month
+                maxCheckout = new Date(masuk.getFullYear(), masuk.getMonth(), 5);
+            } else {
+                // If check-in on/after 5th, max is 5th of next month
+                maxCheckout = new Date(masuk.getFullYear(), masuk.getMonth() + 1, 5);
+            }
+            
+            // Compare dates only (ignore time component)
+            const keluarDate = new Date(keluar.getFullYear(), keluar.getMonth(), keluar.getDate());
+            const maxDate = new Date(maxCheckout.getFullYear(), maxCheckout.getMonth(), maxCheckout.getDate());
+            
+            if (keluarDate > maxDate) {
+                const maxStr = maxCheckout.toLocaleDateString('id-ID');
+                alert('Tanggal keluar tidak boleh melewati ' + maxStr + '!');
+                tanggalKeluar.value = '';
+                return false;
+            }
+            return true;
         }
 
         roomSelect.addEventListener('change', updateRoomInfo);
@@ -136,38 +266,45 @@
             const tipe = tipeSewa.value;
             if (tipe === 'bulanan') {
                 const masuk = new Date(tanggalMasuk.value);
-                const keluar = new Date(masuk);
-                keluar.setDate(keluar.getDate() + 30);
-                const year = keluar.getFullYear();
-                const month = String(keluar.getMonth() + 1).padStart(2, '0');
-                const day = String(keluar.getDate()).padStart(2, '0');
+                
+                // Calculate max checkout: 5th of next applicable month
+                let maxCheckout;
+                if (masuk.getDate() < 5) {
+                    // If check-in before 5th, max is 5th of same month
+                    maxCheckout = new Date(masuk.getFullYear(), masuk.getMonth(), 5);
+                } else {
+                    // If check-in on/after 5th, max is 5th of next month
+                    maxCheckout = new Date(masuk.getFullYear(), masuk.getMonth() + 1, 5);
+                }
+                
+                const year = maxCheckout.getFullYear();
+                const month = String(maxCheckout.getMonth() + 1).padStart(2, '0');
+                const day = String(maxCheckout.getDate()).padStart(2, '0');
                 tanggalKeluar.value = `${year}-${month}-${day}`;
-            }
-        }
-
-        function autoCalculateCheckin() {
-            if (!tanggalKeluar.value) return;
-            const tipe = tipeSewa.value;
-            if (tipe === 'bulanan') {
-                const keluar = new Date(tanggalKeluar.value);
-                const masuk = new Date(keluar);
-                masuk.setDate(masuk.getDate() - 30);
-                const year = masuk.getFullYear();
-                const month = String(masuk.getMonth() + 1).padStart(2, '0');
-                const day = String(masuk.getDate()).padStart(2, '0');
-                tanggalMasuk.value = `${year}-${month}-${day}`;
+                calculatePriceProration();
             }
         }
 
         tipeSewa.addEventListener('change', function() {
-            if (tipeSewa.value !== 'bulanan') {
-                // For harian, do not auto fill; leave as-is or user set
-                return;
+            if (tipeSewa.value === 'bulanan') {
+                autoCalculateCheckout();
+            } else {
+                calculatePriceProration();
             }
-            autoCalculateCheckout();
         });
 
-        tanggalMasuk.addEventListener('change', autoCalculateCheckout);
-        tanggalKeluar.addEventListener('change', autoCalculateCheckin);
+        tanggalMasuk.addEventListener('change', function() {
+            if (tipeSewa.value === 'bulanan') {
+                autoCalculateCheckout();
+            } else {
+                calculatePriceProration();
+            }
+        });
+        
+        tanggalKeluar.addEventListener('change', function() {
+            if (validateCheckoutDate()) {
+                calculatePriceProration();
+            }
+        });
     });
 </script>
