@@ -26,7 +26,7 @@
                     <strong>Total Saat Ini:</strong> <span id="billing-total"></span>
                 </div>
                 <div class="col-md-6">
-                    <strong>Total Setelah Addon:</strong> <span id="billing-new-total" class="text-success"><strong></strong></span>
+                    <strong>Total Setelah Addon:</strong> <span id="billing-new-total" ><strong></strong></span>
                 </div>
             </div>
         </div>

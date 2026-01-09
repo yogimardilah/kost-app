@@ -585,7 +585,8 @@
                          data-status="{{ $occ->status }}"
                          data-masuk="{{ $occ->tanggal_masuk }}"
                          data-keluar="{{ $occ->tanggal_keluar }}"
-                         data-days="{{ is_null($occ->days_remaining) ? '' : $occ->days_remaining }}">
+                         data-days="{{ is_null($occ->days_remaining) ? '' : $occ->days_remaining }}"
+                         data-tipe-harga="{{ $occ->tipe_harga ?? '' }}">
                         <div class="seat-header {{ $cardClass }}">
                             <span class="seat-badge">
                                 @if(!empty($occ->expired))
@@ -627,6 +628,9 @@
                 <a id="modalUpgrade" class="btn btn-primary btn-cinema" href="#" style="display:none;">Upgrade Kamar</a>
                 <a id="modalWhatsApp" class="btn btn-success btn-cinema" href="#" target="_blank" style="display:none;">
                     <i class="fab fa-whatsapp"></i> Kirim WA
+                </a>
+                <a id="modalPerpanjang" class="btn btn-info btn-cinema" href="#" style="display:none;">
+                    <i class="fas fa-calendar-plus"></i> Perpanjang Sewa
                 </a>
                 <form id="modalCompleteForm" method="POST" style="display:none;">
                     @csrf
@@ -693,6 +697,7 @@
                 bodyHTML = `
                     <div class="modal-info-row"><span class="label">Penyewa</span><span class="value">${data.tenant}</span></div>
                     <div class="modal-info-row"><span class="label">Jenis Kamar</span><span class="value">${data.jenis || '-'}</span></div>
+                    <div class="modal-info-row"><span class="label">Tipe Sewa</span><span class="value">${data.tipeHarga ? (data.tipeHarga.charAt(0).toUpperCase() + data.tipeHarga.slice(1)) : '-'}</span></div>
                     <div class="modal-info-row"><span class="label">Status</span><span class="value">${data.status}</span></div>
                     <div class="modal-info-row"><span class="label">Check-in</span><span class="value">${data.masuk}</span></div>
                     <div class="modal-info-row"><span class="label">Check-out</span><span class="value">${data.keluar || '-'}</span></div>
@@ -790,6 +795,34 @@
                     document.getElementById('modalCompleteForm').action = data.completeUrl;
                 } else {
                     document.getElementById('modalComplete').style.display = 'none';
+                }
+                
+                // Show Perpanjang Sewa button if:
+                // 1. No unpaid billing (paid or no billing)
+                // 2. Tipe harga is 'bulanan'
+                // 3. Within 5 days of checkout (H-5)
+                const isBulanan = (data.tipeHarga || '').toLowerCase() === 'bulanan';
+                const checkout = data.keluar ? new Date(data.keluar) : null;
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                let isWithin5Days = false;
+                
+                if (checkout) {
+                    checkout.setHours(0, 0, 0, 0);
+                    const diffTime = checkout - today;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    isWithin5Days = diffDays >= 0 && diffDays <= 5;
+                }
+                
+                const canExtend = (!hasBilling || paid) && isBulanan && isWithin5Days;
+                
+                if (canExtend && data.editUrl) {
+                    // Use edit URL as base and add extend parameter
+                    const extendUrl = data.editUrl + (data.editUrl.includes('?') ? '&' : '?') + 'extend=true';
+                    document.getElementById('modalPerpanjang').style.display = '';
+                    document.getElementById('modalPerpanjang').href = extendUrl;
+                } else {
+                    document.getElementById('modalPerpanjang').style.display = 'none';
                 }
             }
             

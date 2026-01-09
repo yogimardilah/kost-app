@@ -98,6 +98,9 @@ class RoomOccupancyController extends Controller
                 $occ->complete_url = route('occupancies.complete', $occ->id);
                 // Upgrade URL for owner-only action
                 $occ->upgrade_url = route('occupancies.upgrade', $occ->id);
+                
+                // Add tipe_harga info for display in modal
+                $occ->tipe_harga = $occ->tipe_harga ?? 'bulanan';
 
                 $occupancies[] = $occ;
             } else {
@@ -203,6 +206,9 @@ class RoomOccupancyController extends Controller
             $keluar = Carbon::parse($data['tanggal_keluar']);
             $data['tanggal_masuk'] = $keluar->copy()->subDays(30)->toDateString();
         }
+        
+        // Save tipe_harga from tipe_sewa before removing it
+        $data['tipe_harga'] = $data['tipe_sewa'] ?? 'bulanan';
         // Remove non-persisted field before create
         unset($data['tipe_sewa']);
         
@@ -234,7 +240,31 @@ class RoomOccupancyController extends Controller
 
         $rooms = Room::orderBy('nomor_kamar')->get();
         $consumers = Consumer::orderBy('nama')->get();
-        return view('occupancies.edit', compact('occupancy','rooms','consumers'));
+        
+        // Check if this is for extending occupancy
+        $isExtending = request()->has('extend') && request()->get('extend') == 'true';
+        
+        if ($isExtending) {
+            // Calculate new dates for extension
+            // Start from 5th of next month
+            $currentCheckout = $occupancy->tanggal_keluar ? \Carbon\Carbon::parse($occupancy->tanggal_keluar) : \Carbon\Carbon::now();
+            $newCheckIn = $currentCheckout->copy()->addDay()->day(5);
+            
+            // If we're already past 5th this month, move to 5th of next month
+            if ($newCheckIn->lte($currentCheckout)) {
+                $newCheckIn->addMonth();
+            }
+            
+            // Check-out is 5th of next month (from 5th to 5th)
+            $newCheckOut = $newCheckIn->copy()->addMonth()->day(5);
+            
+            // Override occupancy dates for form display
+            $occupancy->tanggal_masuk = $newCheckIn->format('Y-m-d');
+            $occupancy->tanggal_keluar = $newCheckOut->format('Y-m-d');
+            $occupancy->tipe_harga = 'bulanan';
+        }
+        
+        return view('occupancies.edit', compact('occupancy','rooms','consumers', 'isExtending'));
     }
 
     public function update(UpdateRoomOccupancyRequest $request, RoomOccupancy $occupancy)
@@ -245,6 +275,31 @@ class RoomOccupancyController extends Controller
         }
 
         $data = $request->validated();
+        
+        // Check if this is an extension request
+        if ($request->input('is_extending') == '1') {
+            // Complete the old occupancy
+            $occupancy->update(['status' => 'tidak aktif']);
+            
+            // Create new occupancy for extension
+            $newOccupancyData = [
+                'room_id' => $occupancy->room_id,
+                'consumer_id' => $occupancy->consumer_id,
+                'tanggal_masuk' => $data['tanggal_masuk'],
+                'tanggal_keluar' => $data['tanggal_keluar'],
+                'tipe_harga' => 'bulanan',
+                'status' => 'aktif',
+            ];
+            
+            $newOccupancy = RoomOccupancy::create($newOccupancyData);
+            
+            // Room stays 'terisi' so no need to update room status
+            
+            // Auto-generate billing for the new occupancy (full monthly price, no prorate)
+            \App\Services\BillingService::generateBillingForOccupancy($newOccupancy);
+            
+            return redirect()->route('occupancies.index')->with('success', 'Perpanjangan sewa berhasil! Transaksi lama diselesaikan dan billing baru telah dibuat.');
+        }
 
         // Prevent room change via general edit; use dedicated upgrade flow
         if ($data['room_id'] != $occupancy->room_id) {

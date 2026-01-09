@@ -1,6 +1,7 @@
 @php
     $occupancy = $occupancy ?? null;
     $selectedRoomId = $selectedRoomId ?? null;
+    $isExtending = $isExtending ?? false;
     $action = $occupancy ? route('occupancies.update', $occupancy) : route('occupancies.store');
 @endphp
 
@@ -9,10 +10,17 @@
     @if($occupancy)
         @method('PUT')
     @endif
+    
+    @if($isExtending)
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> <strong>Mode Perpanjangan Sewa</strong><br>
+            Tanggal sewa otomatis diatur untuk periode berikutnya. Harga bulanan penuh tanpa prorate.
+        </div>
+    @endif
 
     <div class="form-group mb-3">
         <label for="room_id">Kamar <span class="text-danger">*</span></label>
-        <select name="room_id" id="room_id" class="form-control @error('room_id') is-invalid @enderror" required>
+        <select name="room_id" id="room_id" class="form-control @error('room_id') is-invalid @enderror" required {{ $isExtending ? 'disabled' : '' }}>
             <option value="">-- Pilih Kamar --</option>
             @foreach($rooms as $room)
                 <option value="{{ $room->id }}" 
@@ -25,6 +33,9 @@
                 </option>
             @endforeach
         </select>
+        @if($isExtending)
+            <input type="hidden" name="room_id" value="{{ $occupancy->room_id }}">
+        @endif
         @error('room_id') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
     </div>
 
@@ -53,18 +64,21 @@
 
     <div class="form-group mb-3">
         <label for="tipe_sewa">Tipe Sewa <span class="text-danger">*</span></label>
-        <select name="tipe_sewa" id="tipe_sewa" class="form-control @error('tipe_sewa') is-invalid @enderror" required>
+        <select name="tipe_sewa" id="tipe_sewa" class="form-control @error('tipe_sewa') is-invalid @enderror" required {{ $isExtending ? 'disabled' : '' }}>
             <option value="">-- Pilih Tipe --</option>
-            <option value="bulanan" {{ old('tipe_sewa') === 'bulanan' ? 'selected' : '' }}>Bulanan</option>
-            <option value="harian" {{ old('tipe_sewa') === 'harian' ? 'selected' : '' }}>Harian</option>
+            <option value="bulanan" {{ old('tipe_sewa', $occupancy->tipe_harga ?? ($isExtending ? 'bulanan' : '')) === 'bulanan' ? 'selected' : '' }}>Bulanan</option>
+            <option value="harian" {{ old('tipe_sewa', $occupancy->tipe_harga ?? '') === 'harian' ? 'selected' : '' }}>Harian</option>
         </select>
+        @if($isExtending)
+            <input type="hidden" name="tipe_sewa" value="bulanan">
+        @endif
         @error('tipe_sewa') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
-        <small class="form-text text-muted">Jika memilih Bulanan, tanggal keluar otomatis +30 hari.</small>
+        <small class="form-text text-muted">{{ $isExtending ? 'Tipe sewa perpanjangan otomatis Bulanan.' : 'Jika memilih Bulanan, tanggal keluar otomatis +30 hari.' }}</small>
     </div>
 
     <div class="form-group mb-3">
         <label for="consumer_id">Penyewa <span class="text-danger">*</span></label>
-        <select name="consumer_id" id="consumer_id" class="form-control @error('consumer_id') is-invalid @enderror" required>
+        <select name="consumer_id" id="consumer_id" class="form-control @error('consumer_id') is-invalid @enderror" required {{ $isExtending ? 'disabled' : '' }}>
             <option value="">-- Pilih Penyewa --</option>
             @foreach($consumers as $c)
                 <option value="{{ $c->id }}" {{ old('consumer_id', $occupancy->consumer_id ?? '') == $c->id ? 'selected' : '' }}>
@@ -72,6 +86,9 @@
                 </option>
             @endforeach
         </select>
+        @if($isExtending)
+            <input type="hidden" name="consumer_id" value="{{ $occupancy->consumer_id }}">
+        @endif
         @error('consumer_id') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
     </div>
 
@@ -79,14 +96,14 @@
         <label for="tanggal_masuk">Tanggal Masuk <span class="text-danger">*</span></label>
         <input type="date" name="tanggal_masuk" id="tanggal_masuk" class="form-control @error('tanggal_masuk') is-invalid @enderror" value="{{ old('tanggal_masuk', $occupancy->tanggal_masuk ?? now()->format('Y-m-d')) }}" required readonly>
         @error('tanggal_masuk') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
-        <small class="form-text text-muted">Tanggal masuk otomatis diisi hari ini dan tidak dapat diubah.</small>
+        <small class="form-text text-muted">{{ $isExtending ? 'Tanggal masuk perpanjangan dimulai tanggal 6.' : 'Tanggal masuk otomatis diisi hari ini dan tidak dapat diubah.' }}</small>
     </div>
 
     <div class="form-group mb-3">
         <label for="tanggal_keluar">Tanggal Keluar</label>
-        <input type="date" name="tanggal_keluar" id="tanggal_keluar" class="form-control @error('tanggal_keluar') is-invalid @enderror" value="{{ old('tanggal_keluar', $occupancy->tanggal_keluar ?? '') }}">
+        <input type="date" name="tanggal_keluar" id="tanggal_keluar" class="form-control @error('tanggal_keluar') is-invalid @enderror" value="{{ old('tanggal_keluar', $occupancy->tanggal_keluar ?? '') }}" {{ $isExtending ? 'readonly' : '' }}>
         @error('tanggal_keluar') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
-        <small class="form-text text-muted">Tanggal keluar tidak boleh melewati tanggal 5 bulan berikutnya dari tanggal masuk.</small>
+        <small class="form-text text-muted">{{ $isExtending ? 'Tanggal keluar perpanjangan sampai tanggal 5 bulan depan (harga bulanan penuh).' : 'Tanggal keluar tidak boleh melewati tanggal 5 bulan berikutnya dari tanggal masuk.' }}</small>
     </div>
 
     <!-- Price Calculation Display -->
@@ -117,8 +134,11 @@
     </div>
 
     <div class="form-group">
+        @if($isExtending)
+            <input type="hidden" name="is_extending" value="1">
+        @endif
         <button type="submit" class="btn btn-primary">
-            <i class="fas fa-save"></i> {{ $occupancy ? 'Update' : 'Simpan' }}
+            <i class="fas fa-save"></i> {{ $isExtending ? 'Simpan Perpanjangan' : ($occupancy ? 'Update' : 'Simpan') }}
         </button>
         <a href="{{ route('occupancies.index') }}" class="btn btn-secondary">Batal</a>
     </div>
@@ -132,6 +152,7 @@
         const roomSelect = document.getElementById('room_id');
         const roomInfo = document.getElementById('room-info');
         const priceCalc = document.getElementById('price-calculation');
+        const isExtending = {{ $isExtending ? 'true' : 'false' }};
 
         // Show room info when room is selected
         function updateRoomInfo() {
@@ -148,7 +169,11 @@
                 document.getElementById('info-fasilitas').textContent = fasilitas || '-';
                 
                 roomInfo.style.display = 'block';
-                calculatePriceProration();
+                
+                // Don't show price calculation if extending
+                if (!isExtending) {
+                    calculatePriceProration();
+                }
             } else {
                 roomInfo.style.display = 'none';
                 priceCalc.style.display = 'none';
@@ -157,6 +182,12 @@
 
         // Calculate and display price calculation for both monthly and daily rental
         function calculatePriceProration() {
+            // Skip calculation if extending mode
+            if (isExtending) {
+                priceCalc.style.display = 'none';
+                return;
+            }
+            
             const tipe = tipeSewa.value;
             if (!tipe || !tanggalMasuk.value || !tanggalKeluar.value || !roomSelect.value) {
                 priceCalc.style.display = 'none';

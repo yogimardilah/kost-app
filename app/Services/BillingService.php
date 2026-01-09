@@ -40,9 +40,9 @@ class BillingService
         // Add room rent as first billing detail (daily vs monthly with proration)
         $roomMonthly = $occupancy->room->harga ?? 0;
         $roomDaily = $occupancy->room->harga_harian ?? 0;
-        $tipeHarga = $occupancy->room->tipe_harga ?? 'bulanan'; // Get room pricing type
+        $tipeHarga = $occupancy->tipe_harga ?? 'bulanan'; // Get occupancy pricing type
         
-        // Use room's tipe_harga to determine pricing, not duration
+        // Use occupancy's tipe_harga to determine pricing, not duration
         if ($tipeHarga === 'harian' && $roomDaily > 0) {
             // Daily pricing
             $unit = (int) $roomDaily;

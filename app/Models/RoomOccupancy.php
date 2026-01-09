@@ -9,7 +9,7 @@ class RoomOccupancy extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['room_id','consumer_id','tanggal_masuk','tanggal_keluar','status'];
+    protected $fillable = ['room_id','consumer_id','tanggal_masuk','tanggal_keluar','tipe_harga','status'];
 
     public function room()
     {
