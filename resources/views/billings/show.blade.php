@@ -21,7 +21,58 @@
         <p><strong>Penyewa:</strong> {{ $billing->consumer->nama ?? '-' }}</p>
         <p><strong>Kamar:</strong> {{ $billing->room->nomor_kamar ?? '-' }}</p>
         <p><strong>Periode:</strong> {{ $billing->periode_awal->format('Y-m-d') }} - {{ $billing->periode_akhir->format('Y-m-d') }}</p>
-        <p><strong>Status:</strong> {{ ucfirst($billing->status) }}</p>
+        
+        <div class="row mt-3">
+            <div class="col-md-3">
+                <div class="info-box">
+                    <span class="info-box-icon bg-primary"><i class="fas fa-file-invoice"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Total Tagihan</span>
+                        <span class="info-box-number">Rp {{ number_format($billing->total_tagihan, 0, ',', '.') }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="info-box">
+                    <span class="info-box-icon bg-success"><i class="fas fa-check-circle"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Total Dibayar</span>
+                        <span class="info-box-number">Rp {{ number_format($billing->total_dibayar, 0, ',', '.') }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="info-box">
+                    <span class="info-box-icon {{ $billing->sisa_tagihan > 0 ? 'bg-warning' : 'bg-success' }}">
+                        <i class="fas fa-{{ $billing->sisa_tagihan > 0 ? 'exclamation-triangle' : 'check' }}"></i>
+                    </span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Sisa Tagihan</span>
+                        <span class="info-box-number">Rp {{ number_format($billing->sisa_tagihan, 0, ',', '.') }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="info-box">
+                    <span class="info-box-icon 
+                        {{ $billing->status == 'lunas' ? 'bg-success' : ($billing->status == 'sebagian' ? 'bg-warning' : 'bg-danger') }}">
+                        <i class="fas fa-info-circle"></i>
+                    </span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Status</span>
+                        <span class="info-box-number">{{ ucfirst($billing->status) }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if($billing->sisa_tagihan > 0 && $billing->status == 'lunas')
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i> <strong>Perhatian:</strong> 
+                Masih ada sisa tagihan <strong>Rp {{ number_format($billing->sisa_tagihan, 0, ',', '.') }}</strong> 
+                tetapi status "Lunas". Silakan update status atau tambahkan pembayaran.
+            </div>
+        @endif
 
         <h5 class="mt-4">Rincian Tagihan</h5>
         @if($billing->details->isEmpty())

@@ -183,10 +183,25 @@
                             <td class="no-print">
                                 @if($t->type === 'billing')
                                     <a href="{{ route('billings.show', $t->id) }}" class="btn btn-sm btn-info">Lihat</a>
+                                    @if(auth()->user()->role_id === 1)
+                                        <a href="{{ route('billings.edit', $t->id) }}" class="btn btn-sm btn-warning" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    @endif
                                 @elseif($t->type === 'payroll')
                                     <a href="{{ route('payrolls.show', $t->id) }}" class="btn btn-sm btn-info">Lihat</a>
+                                    @if(auth()->user()->role_id === 1)
+                                        <a href="{{ route('payrolls.edit', $t->id) }}" class="btn btn-sm btn-warning" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    @endif
                                 @else
                                     <a href="{{ route('purchases.edit', $t->id) }}" class="btn btn-sm btn-info">Lihat</a>
+                                    @if(auth()->user()->role_id === 1)
+                                        <a href="{{ route('purchases.edit', $t->id) }}" class="btn btn-sm btn-warning" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    @endif
                                 @endif
                             </td>
                         </tr>

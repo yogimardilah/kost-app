@@ -58,4 +58,39 @@ class Billing extends Model
     {
         return $this->hasMany(Payment::class);
     }
+
+    /**
+     * Get total amount paid for this billing.
+     */
+    public function getTotalDibayarAttribute()
+    {
+        return $this->payments()->sum('jumlah');
+    }
+
+    /**
+     * Get remaining amount to be paid.
+     */
+    public function getSisaTagihanAttribute()
+    {
+        return $this->total_tagihan - $this->total_dibayar;
+    }
+
+    /**
+     * Update billing status based on payments.
+     */
+    public function updateStatus()
+    {
+        $totalDibayar = $this->total_dibayar;
+        $totalTagihan = $this->total_tagihan;
+
+        if ($totalDibayar == 0) {
+            $this->status = 'pending';
+        } elseif ($totalDibayar >= $totalTagihan) {
+            $this->status = 'lunas';
+        } else {
+            $this->status = 'sebagian';
+        }
+
+        $this->save();
+    }
 }

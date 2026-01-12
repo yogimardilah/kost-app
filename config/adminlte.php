@@ -14,9 +14,9 @@ return [
     |
     */
 
-    'title' => 'KOST APP',
+    'title' => 'Serene Kost',
     'title_prefix' => '',
-    'title_postfix' => '',
+    'title_postfix' => ' - Management',
 
     /*
     |--------------------------------------------------------------------------
@@ -31,7 +31,7 @@ return [
     */
 
     'use_ico_only' => false,
-    'use_full_favicon' => false,
+    'use_full_favicon' => true,
 
     /*
     |--------------------------------------------------------------------------
@@ -65,7 +65,7 @@ return [
 
     'logo' => '<b>Kost</b>App',
     'logo_img_alt' => 'Manajemen Kost',
-    'logo_img' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
+    'logo_img' => 'img/logo_kost2.jpeg',
     'logo_img_class' => 'brand-image img-circle elevation-3',
     'logo_img_xl' => null,
     'logo_img_xl_class' => 'brand-image-xs',
@@ -84,13 +84,13 @@ return [
     */
 
     'auth_logo' => [
-        'enabled' => false,
+        'enabled' => true,
         'img' => [
-            'path' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
-            'alt' => 'Auth Logo',
-            'class' => '',
-            'width' => 50,
-            'height' => 50,
+            'path' => 'img/logo_kost2.jpeg',
+            'alt' => 'Serene Kost',
+            'class' => 'rounded-circle',
+            'width' => 80,
+            'height' => 80,
         ],
     ],
 
@@ -113,8 +113,8 @@ return [
         'enabled' => true,
         'mode' => 'fullscreen',
         'img' => [
-            'path' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
-            'alt' => 'AdminLTE Preloader Image',
+            'path' => 'img/logo_kost2.jpeg',
+            'alt' => 'Serene Kost Preloader',
             'effect' => 'animation__shake',
             'width' => 60,
             'height' => 60,

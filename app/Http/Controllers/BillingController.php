@@ -42,6 +42,116 @@ class BillingController extends Controller
         return view('billings.show', compact('billing'));
     }
 
+    public function edit(Billing $billing)
+    {
+        // Only owner can edit
+        if (auth()->user()->role_id !== 1) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        return view('billings.edit', compact('billing'));
+    }
+
+    public function update(\Illuminate\Http\Request $request, Billing $billing)
+    {
+        // Only owner can update
+        if (auth()->user()->role_id !== 1) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $request->validate([
+            'periode_awal' => 'required|date',
+            'periode_akhir' => 'required|date|after_or_equal:periode_awal',
+            'total_tagihan' => 'required|numeric|min:0',
+            'details' => 'nullable|array',
+            'details.*.keterangan' => 'required|string',
+            'details.*.qty' => 'required|numeric|min:0.01',
+            'details.*.harga' => 'required|numeric|min:0',
+            'details.*.subtotal' => 'required|numeric|min:0',            'payments.*.tanggal_bayar' => 'required|date',
+            'payments.*.jumlah' => 'required|numeric|min:0',
+            'payments.*.metode' => 'required|in:tunai,transfer,qris',        ]);
+
+        // Update billing main data
+        $billing->update([
+            'periode_awal' => $request->periode_awal,
+            'periode_akhir' => $request->periode_akhir,
+            'total_tagihan' => $request->total_tagihan,
+        ]);
+
+        // Update or create details
+        if ($request->has('details')) {
+            $existingDetailIds = [];
+            
+            foreach ($request->details as $detailData) {
+                if (isset($detailData['id'])) {
+                    // Update existing detail
+                    $detail = \App\Models\BillingDetail::find($detailData['id']);
+                    if ($detail && $detail->billing_id == $billing->id) {
+                        $detail->update([
+                            'keterangan' => $detailData['keterangan'],
+                            'qty' => $detailData['qty'],
+                            'harga' => $detailData['harga'],
+                            'subtotal' => $detailData['subtotal'],
+                        ]);
+                        $existingDetailIds[] = $detail->id;
+                    }
+                } else {
+                    // Create new detail
+                    $newDetail = $billing->details()->create([
+                        'keterangan' => $detailData['keterangan'],
+                        'qty' => $detailData['qty'],
+                        'harga' => $detailData['harga'],
+                        'subtotal' => $detailData['subtotal'],
+                    ]);
+                    $existingDetailIds[] = $newDetail->id;
+                }
+            }
+            
+            // Delete details that are not in the submitted list
+            $billing->details()->whereNotIn('id', $existingDetailIds)->delete();
+        } else {
+            // If no details submitted, delete all details
+            $billing->details()->delete();
+        }
+
+        // Update or create payments
+        if ($request->has('payments')) {
+            $existingPaymentIds = [];
+            
+            foreach ($request->payments as $paymentData) {
+                if (isset($paymentData['id'])) {
+                    // Update existing payment
+                    $payment = \App\Models\Payment::find($paymentData['id']);
+                    if ($payment && $payment->billing_id == $billing->id) {
+                        $payment->update([
+                            'tanggal_bayar' => $paymentData['tanggal_bayar'],
+                            'jumlah' => $paymentData['jumlah'],
+                            'metode' => $paymentData['metode'],
+                        ]);
+                        $existingPaymentIds[] = $payment->id;
+                    }
+                } else {
+                    // Create new payment
+                    $newPayment = $billing->payments()->create([
+                        'tanggal_bayar' => $paymentData['tanggal_bayar'],
+                        'jumlah' => $paymentData['jumlah'],
+                        'metode' => $paymentData['metode'],
+                    ]);
+                    $existingPaymentIds[] = $newPayment->id;
+                }
+            }
+            
+            // Delete payments that are not in the submitted list
+            $billing->payments()->whereNotIn('id', $existingPaymentIds)->delete();
+        }
+
+        // Auto-update status based on payments
+        $billing->updateStatus();
+
+        return redirect()->route('billings.show', $billing)
+            ->with('success', 'Billing dan detail berhasil diupdate!');
+    }
+
     /**
      * Download invoice as PDF.
      */

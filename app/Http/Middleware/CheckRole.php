@@ -19,9 +19,35 @@ class CheckRole
             return redirect()->route('login');
         }
 
-        $userRole = auth()->user()->role->nama ?? null;
+        $user = auth()->user();
+        
+        // Load role relationship if not already loaded
+        if (!$user->relationLoaded('role')) {
+            $user->load('role');
+        }
 
-        if ($userRole !== $role) {
+        $userRole = $user->role->nama ?? null;
+
+        // Fallback: if role name doesn't match, also check by role_id
+        // owner = role_id 1, admin = role_id 2
+        $roleMapping = [
+            'owner' => 1,
+            'admin' => 2,
+        ];
+
+        $hasAccess = false;
+        
+        // Check by role name
+        if ($userRole === $role) {
+            $hasAccess = true;
+        }
+        
+        // Check by role_id as fallback
+        if (!$hasAccess && isset($roleMapping[$role]) && $user->role_id === $roleMapping[$role]) {
+            $hasAccess = true;
+        }
+
+        if (!$hasAccess) {
             abort(403, 'Akses ditolak. Hanya role ' . $role . ' yang dapat mengakses halaman ini.');
         }
 
