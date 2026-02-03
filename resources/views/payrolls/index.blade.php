@@ -120,9 +120,9 @@
                                 <th width="5%">No</th>
                                 <th width="12%">Periode</th>
                                 <th width="15%">Karyawan</th>
-                                <th width="10%">Gaji Pokok</th>
-                                <th width="10%">Bonus</th>
-                                <th width="10%">Potongan</th>
+                                <th width="10%" style="display: none;">Gaji Pokok</th>
+                                <th width="10%" style="display: none;">Bonus</th>
+                                <th width="10%" style="display: none;">Potongan</th>
                                 <th width="10%">Total Gaji</th>
                                 <th width="10%">Tanggal Bayar</th>
                                 <th width="8%">Status</th>
@@ -138,9 +138,9 @@
                                         <strong>{{ $payroll->employee->nama }}</strong><br>
                                         <small class="text-muted">{{ $payroll->employee->nik }}</small>
                                     </td>
-                                    <td>Rp {{ number_format($payroll->gaji_pokok, 0, ',', '.') }}</td>
-                                    <td>Rp {{ number_format($payroll->bonus, 0, ',', '.') }}</td>
-                                    <td>Rp {{ number_format($payroll->potongan, 0, ',', '.') }}</td>
+                                    <td style="display: none;">Rp {{ number_format($payroll->gaji_pokok, 0, ',', '.') }}</td>
+                                    <td style="display: none;">Rp {{ number_format($payroll->bonus, 0, ',', '.') }}</td>
+                                    <td style="display: none;">Rp {{ number_format($payroll->potongan, 0, ',', '.') }}</td>
                                     <td><strong>Rp {{ number_format($payroll->total_gaji, 0, ',', '.') }}</strong></td>
                                     <td>{{ $payroll->tanggal_bayar ? $payroll->tanggal_bayar->format('d M Y H:i:s') : '-' }}</td>
                                     <td>

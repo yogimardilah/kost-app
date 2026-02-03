@@ -48,27 +48,23 @@
                 @enderror
             </div>
 
-            <!-- Gaji Pokok -->
+            <!-- Gaji Pokok (Informasi saja) -->
             <div class="form-group">
-                <label for="gaji_pokok">Gaji Pokok <span class="text-danger">*</span></label>
+                <label for="gaji_pokok_display">Gaji Pokok (Informasi)</label>
                 <div class="input-group">
                     <div class="input-group-prepend">
                         <span class="input-group-text">Rp</span>
                     </div>
-                    <input type="number" name="gaji_pokok" id="gaji_pokok" class="form-control @error('gaji_pokok') is-invalid @enderror" 
-                           value="{{ old('gaji_pokok', $payroll->gaji_pokok ?? '') }}" required min="0">
+                    <input type="text" id="gaji_pokok_display" class="form-control" readonly>
                 </div>
-                <small class="form-text text-muted">Akan otomatis terisi sesuai gaji karyawan</small>
-                @error('gaji_pokok')
-                    <span class="invalid-feedback">{{ $message }}</span>
-                @enderror
+                <small class="form-text text-muted">Hanya sebagai referensi, tidak disimpan</small>
             </div>
         </div>
 
         <!-- Right Column -->
         <div class="col-md-6">
-            <!-- Bonus -->
-            <div class="form-group">
+            <!-- Bonus (Hidden) -->
+            <div class="form-group" style="display: none;">
                 <label for="bonus">Bonus</label>
                 <div class="input-group">
                     <div class="input-group-prepend">
@@ -82,8 +78,8 @@
                 @enderror
             </div>
 
-            <!-- Potongan -->
-            <div class="form-group">
+            <!-- Potongan (Hidden) -->
+            <div class="form-group" style="display: none;">
                 <label for="potongan">Potongan</label>
                 <div class="input-group">
                     <div class="input-group-prepend">
@@ -99,17 +95,17 @@
 
             <!-- Total Gaji -->
             <div class="form-group">
-                <label for="total_gaji_display">Total Gaji</label>
+                <label for="total_gaji">Total Gaji <span class="text-danger">*</span></label>
                 <div class="input-group">
                     <div class="input-group-prepend">
                         <span class="input-group-text">Rp</span>
                     </div>
-                    <input type="number" name="total_gaji" id="total_gaji_display" class="form-control @error('total_gaji') is-invalid @enderror" 
-                           value="{{ old('total_gaji', $payroll->total_gaji ?? 0) }}" min="0">
+                    <input type="number" name="total_gaji" id="total_gaji" class="form-control @error('total_gaji') is-invalid @enderror" 
+                           value="{{ old('total_gaji', $payroll->total_gaji ?? 0) }}" required min="0">
                 </div>
-                <small class="form-text text-muted">Otomatis: Gaji Pokok + Bonus - Potongan (dapat diedit manual)</small>
+                <small class="form-text text-muted">Isi manual total gaji yang akan dibayarkan</small>
                 @error('total_gaji')
-                    <span class="invalid-feedback">{{ $message }}</span>
+                    <span class="invalid-feedback d-block">{{ $message }}</span>
                 @enderror
             </div>
 
@@ -248,7 +244,13 @@
             employeeData.tanggalBergabung = tanggalBergabung;
             employeeData.tanggalBerakhir = tanggalBerakhir;
             
+            // Display gaji pokok as formatted reference
+            document.getElementById('gaji_pokok_display').value = new Intl.NumberFormat('id-ID').format(gaji);
+            
             calculateProrate();
+        } else {
+            // Clear gaji pokok if no employee selected
+            document.getElementById('gaji_pokok_display').value = '';
         }
     });
 
@@ -327,21 +329,7 @@
     }
 
     // Calculate total gaji
-    function calculateTotal() {
-        const gajiPokok = parseFloat(document.getElementById('gaji_pokok').value) || 0;
-        const bonus = parseFloat(document.getElementById('bonus').value) || 0;
-        const potongan = parseFloat(document.getElementById('potongan').value) || 0;
-        
-        const total = gajiPokok + bonus - potongan;
-        
-        // Format as currency
-        document.getElementById('total_gaji_display').value = new Intl.NumberFormat('id-ID').format(total);
-    }
-
-    // Calculate on input change
-    document.getElementById('gaji_pokok').addEventListener('input', calculateTotal);
-    document.getElementById('bonus').addEventListener('input', calculateTotal);
-    document.getElementById('potongan').addEventListener('input', calculateTotal);
+    // Total gaji is now manual input, no auto-calculation
 
     // Show/hide tanggal bayar based on status
     function toggleTanggalBayar() {
@@ -359,9 +347,8 @@
 
     document.getElementById('status').addEventListener('change', toggleTanggalBayar);
 
-    // Initial calculation and toggle
+    // Initial toggle
     document.addEventListener('DOMContentLoaded', function() {
-        calculateTotal();
         toggleTanggalBayar();
     });
 </script>

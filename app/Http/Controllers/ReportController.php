@@ -111,9 +111,10 @@ class ReportController extends Controller
 
         // Get expenses from payrolls
         $payrollQuery = \App\Models\Payroll::with('employee')
-            ->selectRaw("'payroll' as type, id, slip_number as reference, COALESCE(tanggal_bayar, created_at) as transaction_date, total_gaji as amount, 'expense' as status, NULL as consumer_id, NULL as room_id, 
-                CONCAT('Gaji Periode ', 
-                    CASE bulan
+            ->join('employees', 'payrolls.employee_id', '=', 'employees.id')
+            ->selectRaw("'payroll' as type, payrolls.id, payrolls.slip_number as reference, COALESCE(payrolls.tanggal_bayar, payrolls.created_at) as transaction_date, payrolls.total_gaji as amount, 'expense' as status, NULL as consumer_id, NULL as room_id, 
+                CONCAT(employees.nama, ' - Gaji Periode ', 
+                    CASE payrolls.bulan
                         WHEN 1 THEN 'Januari'
                         WHEN 2 THEN 'Februari'
                         WHEN 3 THEN 'Maret'
@@ -127,7 +128,7 @@ class ReportController extends Controller
                         WHEN 11 THEN 'November'
                         WHEN 12 THEN 'Desember'
                     END, 
-                    ' ', tahun
+                    ' ', payrolls.tahun
                 ) as description, NULL as periode_awal, NULL as periode_akhir");
 
         if ($request->filled('search')) {
@@ -158,7 +159,7 @@ class ReportController extends Controller
         }
 
         // Only show paid payrolls
-        $payrollQuery->where('status', 'dibayar');
+        $payrollQuery->where('payrolls.status', 'dibayar');
 
         // Combine all queries
         $query = $billingQuery->union($purchaseQuery)->union($payrollQuery);

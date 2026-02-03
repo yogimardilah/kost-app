@@ -643,6 +643,10 @@
     </div>
 
     <script>
+        // Use server date for accurate H-5 calculation
+        const serverToday = new Date('{{ \Carbon\Carbon::now()->format('Y-m-d') }}');
+        serverToday.setHours(0, 0, 0, 0);
+        
         function closeSeatModal() {
             document.getElementById('seatModal').style.display = 'none';
         }
@@ -800,16 +804,14 @@
                 // Show Perpanjang Sewa button if:
                 // 1. No unpaid billing (paid or no billing)
                 // 2. Tipe harga is 'bulanan'
-                // 3. Within 5 days of checkout (H-5)
+                // 3. Within 5 days of checkout (H-5) based on server time
                 const isBulanan = (data.tipeHarga || '').toLowerCase() === 'bulanan';
                 const checkout = data.keluar ? new Date(data.keluar) : null;
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
                 let isWithin5Days = false;
                 
                 if (checkout) {
                     checkout.setHours(0, 0, 0, 0);
-                    const diffTime = checkout - today;
+                    const diffTime = checkout - serverToday;
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                     isWithin5Days = diffDays >= 0 && diffDays <= 5;
                 }

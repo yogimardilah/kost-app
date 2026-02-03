@@ -90,8 +90,7 @@ class PayrollController extends Controller
         $sequence = $lastSlip ? (intval(substr($lastSlip->slip_number, -3)) + 1) : 1;
         $data['slip_number'] = sprintf('SLIP/%s/%s/%03d', $year, $month, $sequence);
         
-        // Calculate total gaji
-        $data['total_gaji'] = $data['gaji_pokok'] + $data['bonus'] - $data['potongan'];
+        // total_gaji comes from user input (manual)
         
         // Handle file upload with compression for images
         if ($request->hasFile('file')) {
@@ -160,8 +159,7 @@ class PayrollController extends Controller
     {
         $data = $request->validated();
         
-        // Calculate total gaji
-        $data['total_gaji'] = $data['gaji_pokok'] + $data['bonus'] - $data['potongan'];
+        // total_gaji comes from user input (manual)
         
         // Handle file upload with compression for images
         if ($request->hasFile('file')) {

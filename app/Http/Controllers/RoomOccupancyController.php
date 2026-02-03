@@ -233,30 +233,32 @@ class RoomOccupancyController extends Controller
 
     public function edit(RoomOccupancy $occupancy)
     {
-        // Only owner (role_id = 1) can edit
-        if (auth()->user()->role_id !== 1) {
+        // Check if this is for extending occupancy
+        $isExtending = request()->has('extend') && request()->get('extend') == 'true';
+        
+        // For extension, allow all roles. For regular edit, only owner (role_id = 1)
+        if (!$isExtending && auth()->user()->role_id !== 1) {
             abort(403, 'Anda tidak memiliki akses untuk mengedit data penyewaan');
         }
 
         $rooms = Room::orderBy('nomor_kamar')->get();
         $consumers = Consumer::orderBy('nama')->get();
         
-        // Check if this is for extending occupancy
-        $isExtending = request()->has('extend') && request()->get('extend') == 'true';
-        
         if ($isExtending) {
             // Calculate new dates for extension
-            // Start from 5th of next month
+            // Extension starts on the same day as current checkout (overlap on checkout day)
             $currentCheckout = $occupancy->tanggal_keluar ? \Carbon\Carbon::parse($occupancy->tanggal_keluar) : \Carbon\Carbon::now();
-            $newCheckIn = $currentCheckout->copy()->addDay()->day(5);
+            $newCheckIn = $currentCheckout->copy(); // Same day as checkout
             
-            // If we're already past 5th this month, move to 5th of next month
-            if ($newCheckIn->lte($currentCheckout)) {
-                $newCheckIn->addMonth();
+            // Calculate checkout date: 1 month from check-in, on the 5th
+            $newCheckOut = $newCheckIn->copy()->addMonth();
+            // Set to 5th of that month
+            $newCheckOut->day(5);
+            
+            // If the resulting checkout is before or equal to check-in, move to next month
+            if ($newCheckOut->lte($newCheckIn)) {
+                $newCheckOut->addMonth();
             }
-            
-            // Check-out is 5th of next month (from 5th to 5th)
-            $newCheckOut = $newCheckIn->copy()->addMonth()->day(5);
             
             // Override occupancy dates for form display
             $occupancy->tanggal_masuk = $newCheckIn->format('Y-m-d');
@@ -269,15 +271,17 @@ class RoomOccupancyController extends Controller
 
     public function update(UpdateRoomOccupancyRequest $request, RoomOccupancy $occupancy)
     {
-        // Only owner (role_id = 1) can update
-        if (auth()->user()->role_id !== 1) {
+        // Check if this is an extension request
+        $isExtending = $request->input('is_extending') == '1';
+        
+        // For extension, allow all roles. For regular update, only owner (role_id = 1)
+        if (!$isExtending && auth()->user()->role_id !== 1) {
             abort(403, 'Anda tidak memiliki akses untuk mengubah data penyewaan');
         }
 
         $data = $request->validated();
         
-        // Check if this is an extension request
-        if ($request->input('is_extending') == '1') {
+        if ($isExtending) {
             // Complete the old occupancy
             $occupancy->update(['status' => 'tidak aktif']);
             
