@@ -144,7 +144,7 @@ class ReportController extends Controller
                 $q->whereDate('tanggal_bayar', '>=', $request->start_date)
                   ->orWhere(function($sub) use ($request) {
                       $sub->whereNull('tanggal_bayar')
-                          ->whereDate('created_at', '>=', $request->start_date);
+                          ->whereDate('payrolls.created_at', '>=', $request->start_date);
                   });
             });
         }
@@ -153,7 +153,7 @@ class ReportController extends Controller
                 $q->whereDate('tanggal_bayar', '<=', $request->end_date)
                   ->orWhere(function($sub) use ($request) {
                       $sub->whereNull('tanggal_bayar')
-                          ->whereDate('created_at', '<=', $request->end_date);
+                          ->whereDate('payrolls.created_at', '<=', $request->end_date);
                   });
             });
         }
