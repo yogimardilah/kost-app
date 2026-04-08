@@ -16,7 +16,14 @@ define('LARAVEL_START', microtime(true));
 |
 */
 
-if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
+// untuk dev
+// if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
+//     require $maintenance;
+// }
+
+
+// untuk prod
+if (file_exists($maintenance = __DIR__.'/../laravel-app/storage/framework/maintenance.php')) {
     require $maintenance;
 }
 
@@ -30,9 +37,11 @@ if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php'))
 | into the script here so we don't need to manually load our classes.
 |
 */
-
+// untuk dev
 require __DIR__.'/../vendor/autoload.php';
 
+// untuk protected
+// require __DIR__.'/../laravel-app/vendor/autoload.php';
 /*
 |--------------------------------------------------------------------------
 | Run The Application
@@ -43,8 +52,12 @@ require __DIR__.'/../vendor/autoload.php';
 | to this client's browser, allowing them to enjoy our application.
 |
 */
-
+// untuk dev
 $app = require_once __DIR__.'/../bootstrap/app.php';
+
+// untuk prod 
+// $app = require_once __DIR__.'/../laravel-app/bootstrap/app.php';
+
 
 $kernel = $app->make(Kernel::class);
 
