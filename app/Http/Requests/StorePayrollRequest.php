@@ -40,7 +40,7 @@ class StorePayrollRequest extends FormRequest
             'tanggal_bayar' => 'nullable|date',
             'status' => 'required|in:pending,dibayar',
             'keterangan' => 'nullable|string',
-            'file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:5120',
+            'file' => 'required|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:5120',
         ];
     }
 

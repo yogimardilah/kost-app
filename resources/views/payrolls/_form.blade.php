@@ -146,8 +146,8 @@
 
             <!-- File Upload -->
             <div class="form-group">
-                <label for="file">Upload File</label>
-                <input type="file" name="file" id="file" class="form-control-file @error('file') is-invalid @enderror" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="previewPayrollFile(this)">
+                <label for="file">Upload File @if(!isset($payroll))<span class="text-danger">*</span>@endif</label>
+                <input type="file" name="file" id="file" class="form-control-file @error('file') is-invalid @enderror" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="previewPayrollFile(this)" @if(!isset($payroll)) required @endif>
                 @error('file')
                     <span class="invalid-feedback d-block">{{ $message }}</span>
                 @enderror
