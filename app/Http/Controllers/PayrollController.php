@@ -79,6 +79,12 @@ class PayrollController extends Controller
     public function store(StorePayrollRequest $request)
     {
         $data = $request->validated();
+
+        // Defensive fallback to prevent null gaji_pokok in DB.
+        if (!array_key_exists('gaji_pokok', $data) || $data['gaji_pokok'] === null || $data['gaji_pokok'] === '') {
+            $employee = Employee::find($data['employee_id']);
+            $data['gaji_pokok'] = $employee?->gaji ?? 0;
+        }
         
         // Generate slip number: SLIP/YYYY/MM/XXX
         $year = $data['tahun'];
@@ -158,6 +164,12 @@ class PayrollController extends Controller
     public function update(UpdatePayrollRequest $request, Payroll $payroll)
     {
         $data = $request->validated();
+
+        // Defensive fallback to prevent null gaji_pokok in DB.
+        if (!array_key_exists('gaji_pokok', $data) || $data['gaji_pokok'] === null || $data['gaji_pokok'] === '') {
+            $employee = Employee::find($data['employee_id']);
+            $data['gaji_pokok'] = $employee?->gaji ?? 0;
+        }
         
         // total_gaji comes from user input (manual)
         

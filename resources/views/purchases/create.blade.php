@@ -65,11 +65,11 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="file">Upload File (Bukti, Invoice, dll)</label>
+                    <label for="file">Upload File (Bukti, Invoice, dll) <span class="text-danger">*</span></label>
                     <div class="input-group">
                         <div class="custom-file">
                             <input type="file" class="custom-file-input @error('file') is-invalid @enderror" id="file" name="file"
-                                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xlsx,.xls">
+                                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xlsx,.xls" required>
                             <label class="custom-file-label" for="file">Pilih file</label>
                         </div>
                     </div>

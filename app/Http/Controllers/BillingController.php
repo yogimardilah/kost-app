@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Billing;
 use App\Services\InvoiceService;
+use Illuminate\Support\Str;
 use PDF;
 
 class BillingController extends Controller
@@ -67,9 +68,12 @@ class BillingController extends Controller
             'details.*.keterangan' => 'required|string',
             'details.*.qty' => 'required|numeric|min:0.01',
             'details.*.harga' => 'required|numeric|min:0',
-            'details.*.subtotal' => 'required|numeric|min:0',            'payments.*.tanggal_bayar' => 'required|date',
+            'details.*.subtotal' => 'required|numeric|min:0',
+            'payments.*.tanggal_bayar' => 'required|date',
             'payments.*.jumlah' => 'required|numeric|min:0',
-            'payments.*.metode' => 'required|in:tunai,transfer,qris',        ]);
+            'payments.*.metode' => 'required|in:tunai,transfer,qris',
+            'payments.*.bukti_bayar_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+        ]);
 
         // Update billing main data
         $billing->update([
@@ -118,24 +122,47 @@ class BillingController extends Controller
         if ($request->has('payments')) {
             $existingPaymentIds = [];
             
-            foreach ($request->payments as $paymentData) {
+            foreach ($request->payments as $index => $paymentData) {
+                $uploadedFile = $request->file("payments.$index.bukti_bayar_file");
+
                 if (isset($paymentData['id'])) {
                     // Update existing payment
                     $payment = \App\Models\Payment::find($paymentData['id']);
                     if ($payment && $payment->billing_id == $billing->id) {
-                        $payment->update([
+                        $payload = [
                             'tanggal_bayar' => $paymentData['tanggal_bayar'],
                             'jumlah' => $paymentData['jumlah'],
                             'metode' => $paymentData['metode'],
-                        ]);
+                        ];
+
+                        if ($uploadedFile) {
+                            $extension = $uploadedFile->getClientOriginalExtension();
+                            $uniqueName = Str::uuid() . '.' . $extension;
+                            $path = $uploadedFile->storeAs('payments', $uniqueName, 'public');
+                            $payload['bukti_bayar'] = $path;
+                        }
+
+                        $payment->update($payload);
+
                         $existingPaymentIds[] = $payment->id;
                     }
                 } else {
+                    if (!$uploadedFile) {
+                        return back()
+                            ->withErrors(["payments.$index.bukti_bayar_file" => 'Upload bukti pembayaran wajib diisi'])
+                            ->withInput();
+                    }
+
+                    $extension = $uploadedFile->getClientOriginalExtension();
+                    $uniqueName = Str::uuid() . '.' . $extension;
+                    $path = $uploadedFile->storeAs('payments', $uniqueName, 'public');
+
                     // Create new payment
                     $newPayment = $billing->payments()->create([
                         'tanggal_bayar' => $paymentData['tanggal_bayar'],
                         'jumlah' => $paymentData['jumlah'],
                         'metode' => $paymentData['metode'],
+                        'bukti_bayar' => $path,
                     ]);
                     $existingPaymentIds[] = $newPayment->id;
                 }

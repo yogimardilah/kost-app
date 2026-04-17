@@ -58,6 +58,10 @@
                     <input type="text" id="gaji_pokok_display" class="form-control" readonly>
                 </div>
                 <small class="form-text text-muted">Hanya sebagai referensi, tidak disimpan</small>
+                <input type="hidden" name="gaji_pokok" id="gaji_pokok" value="{{ old('gaji_pokok', $payroll->gaji_pokok ?? 0) }}">
+                @error('gaji_pokok')
+                    <span class="invalid-feedback d-block">{{ $message }}</span>
+                @enderror
             </div>
         </div>
 
@@ -261,9 +265,12 @@
     function calculateProrate() {
         const bulan = parseInt(document.getElementById('bulan').value);
         const tahun = parseInt(document.getElementById('tahun').value);
+        const gajiPokokInput = document.getElementById('gaji_pokok');
+        const prorateInfo = document.getElementById('prorate-info');
         
         if (!bulan || !tahun || !employeeData.gaji) {
-            document.getElementById('prorate-info').style.display = 'none';
+            if (gajiPokokInput) gajiPokokInput.value = employeeData.gaji || 0;
+            if (prorateInfo) prorateInfo.style.display = 'none';
             return;
         }
 
@@ -308,24 +315,33 @@
             const gajiPerHari = employeeData.gaji / daysInMonth;
             const gajiProrate = Math.round((gajiPerHari * workingDays) / 100) * 100; // Round to nearest 100
 
-            // Show prorate info
-            document.getElementById('gaji-full').textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(employeeData.gaji);
-            document.getElementById('total-hari').textContent = daysInMonth;
-            document.getElementById('hari-kerja').textContent = workingDays;
-            document.getElementById('gaji-per-hari').textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.round(gajiPerHari));
-            document.getElementById('gaji-prorate').textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(gajiProrate);
-            document.getElementById('prorate-reason').textContent = prorateReason;
-            document.getElementById('prorate-info').style.display = 'block';
-
             // Set gaji pokok to prorated amount
-            document.getElementById('gaji_pokok').value = gajiProrate;
+            if (gajiPokokInput) gajiPokokInput.value = gajiProrate;
+
+            if (prorateInfo) {
+                const gajiFull = document.getElementById('gaji-full');
+                const totalHari = document.getElementById('total-hari');
+                const hariKerja = document.getElementById('hari-kerja');
+                const gajiPerHariEl = document.getElementById('gaji-per-hari');
+                const gajiProrateEl = document.getElementById('gaji-prorate');
+                const prorateReasonEl = document.getElementById('prorate-reason');
+
+                if (gajiFull && totalHari && hariKerja && gajiPerHariEl && gajiProrateEl && prorateReasonEl) {
+                    gajiFull.textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(employeeData.gaji);
+                    totalHari.textContent = daysInMonth;
+                    hariKerja.textContent = workingDays;
+                    gajiPerHariEl.textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.round(gajiPerHari));
+                    gajiProrateEl.textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(gajiProrate);
+                    prorateReasonEl.textContent = prorateReason;
+                }
+
+                prorateInfo.style.display = 'block';
+            }
         } else {
             // Full month salary
-            document.getElementById('gaji_pokok').value = employeeData.gaji;
-            document.getElementById('prorate-info').style.display = 'none';
+            if (gajiPokokInput) gajiPokokInput.value = employeeData.gaji;
+            if (prorateInfo) prorateInfo.style.display = 'none';
         }
-
-        calculateTotal();
     }
 
     // Calculate total gaji
@@ -350,6 +366,11 @@
     // Initial toggle
     document.addEventListener('DOMContentLoaded', function() {
         toggleTanggalBayar();
+
+        const employeeSelect = document.getElementById('employee_id');
+        if (employeeSelect && employeeSelect.value) {
+            employeeSelect.dispatchEvent(new Event('change'));
+        }
     });
 </script>
 @endpush

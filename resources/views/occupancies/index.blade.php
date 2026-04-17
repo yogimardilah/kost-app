@@ -432,7 +432,7 @@
     <div class="seat-map-container">
         <!-- Cinema Screen -->
         <div class="cinema-screen">
-            🏠 KOST MANAGEMENT SYSTEM
+            Serene Management System
         </div>
 
         <!-- Search & Stats -->
@@ -636,7 +636,7 @@
                     @csrf
                 </form>
                 <button id="modalComplete" class="btn btn-success btn-cinema" type="button" style="display:none;" onclick="completeOccupancy()">Selesai Sewa</button>
-                <a id="modalEdit" class="btn btn-primary btn-cinema" href="#">Edit</a>
+                <a id="modalEdit" class="btn btn-primary btn-cinema" href="#" style="display:none;">Edit</a>
                 <button class="btn btn-secondary btn-cinema" type="button" onclick="closeSeatModal()">Tutup</button>
             </div>
         </div>
@@ -655,10 +655,6 @@
             if (confirm('Yakin ingin menyelesaikan penyewaan ini? Kamar akan menjadi tersedia untuk penyewa baru.')) {
                 document.getElementById('modalCompleteForm').submit();
             }
-        }
-
-        function isOwner() {
-            return {{ auth()->user()->role_id === 1 ? 'true' : 'false' }};
         }
 
         // Owner (1) or Admin (2) can upgrade
@@ -722,13 +718,8 @@
                                 
                 document.getElementById('modalAdd').style.display = 'none';
                 
-                // Edit: only Owner (role_id = 1)
-                if (isOwner()) {
-                    document.getElementById('modalEdit').style.display = '';
-                    document.getElementById('modalEdit').href = data.editUrl;
-                } else {
-                    document.getElementById('modalEdit').style.display = 'none';
-                }
+                // Edit button is hidden for all roles.
+                document.getElementById('modalEdit').style.display = 'none';
 
                 // Upgrade: Owner (1) and Admin (2)
                 if (isAdminOrOwner() && data.upgradeUrl) {

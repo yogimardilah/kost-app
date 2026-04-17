@@ -19,7 +19,7 @@
                 </div>
             </div>
             <div class="card-body">
-                <form action="{{ route('billings.update', $billing) }}" method="POST" id="billingForm">
+                <form action="{{ route('billings.update', $billing) }}" method="POST" enctype="multipart/form-data" id="billingForm">
                     @csrf
                     @method('PUT')
 
@@ -227,7 +227,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-5">
+                                    <div class="col-md-3">
                                         <div class="form-group mb-0">
                                             <label class="mb-1"><i class="fas fa-credit-card"></i> Metode Pembayaran <span class="text-danger">*</span></label>
                                             <select name="payments[{{ $index }}][metode]" class="form-control" required>
@@ -235,6 +235,15 @@
                                                 <option value="transfer" {{ old('payments.'.$index.'.metode', $payment->metode) == 'transfer' ? 'selected' : '' }}>🏦 Transfer</option>
                                                 <option value="qris" {{ old('payments.'.$index.'.metode', $payment->metode) == 'qris' ? 'selected' : '' }}>📱 QRIS</option>
                                             </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group mb-0">
+                                            <label class="mb-1"><i class="fas fa-file-upload"></i> Bukti Pembayaran</label>
+                                            <input type="file" name="payments[{{ $index }}][bukti_bayar_file]" class="form-control" accept="image/*,.pdf">
+                                            @error('payments.'.$index.'.bukti_bayar_file')
+                                                <small class="text-danger d-block">{{ $message }}</small>
+                                            @enderror
                                         </div>
                                     </div>
                                     <div class="col-md-1" style="display:none;">
@@ -476,7 +485,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-5">
+                    <div class="col-md-3">
                         <div class="form-group mb-0">
                             <label class="mb-1"><i class="fas fa-credit-card"></i> Metode Pembayaran <span class="text-danger">*</span></label>
                             <select name="payments[\${paymentIndex}][metode]" class="form-control" required>
@@ -484,6 +493,12 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <option value="transfer">🏦 Transfer</option>
                                 <option value="qris">📱 QRIS</option>
                             </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group mb-0">
+                            <label class="mb-1"><i class="fas fa-file-upload"></i> Bukti Pembayaran <span class="text-danger">*</span></label>
+                            <input type="file" name="payments[\${paymentIndex}][bukti_bayar_file]" class="form-control" accept="image/*,.pdf" required>
                         </div>
                     </div>
                     <div class="col-md-1" style="display:none;">

@@ -14,7 +14,7 @@
                     <h5 class="card-title">Pengaturan Umum</h5>
                 </div>
                 <div class="card-body">
-                    <p><strong>Nama Aplikasi:</strong> Kost Management System</p>
+                    <p><strong>Nama Aplikasi:</strong> Serene Management System</p>
                     <p><strong>Versi:</strong> 1.0.0</p>
                     <p><strong>Tanggal Update Terakhir:</strong> {{ now()->format('Y-m-d H:i:s') }}</p>
                 </div>

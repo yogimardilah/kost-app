@@ -147,7 +147,7 @@ class PurchaseController extends Controller
             'notes' => 'nullable|string',
             // Accept based on extension OR common Office/PDF/Image MIME types (handles octet-stream uploads too)
             'file' => [
-                'nullable',
+                'required',
                 'file',
                 'max:5120',
                 function ($attribute, $value, $fail) {

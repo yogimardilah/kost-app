@@ -44,7 +44,6 @@ class InvoiceService
 
         // Prepare simple variables to avoid complex expressions inside heredoc interpolation
         $kost = $data['kost'];
-        $kostName = $kost->nama_kost ?? 'KOST';
         $kostAlamat = $kost->alamat ?? '';
         $kostTelp = $kost->telepon ?? '-';
 
@@ -68,6 +67,15 @@ class InvoiceService
         $status = $data['status'];
         $statusUpper = strtoupper($status);
         $printedAt = now()->format('Y-m-d H:i:s');
+
+        $companyName = 'Serene';
+        $logoHtml = '';
+        $logoPath = public_path('img/logo-new.jpeg');
+        if (is_file($logoPath)) {
+            $logoMime = function_exists('mime_content_type') ? (mime_content_type($logoPath) ?: 'image/png') : 'image/png';
+            $logoBase64 = base64_encode((string) file_get_contents($logoPath));
+            $logoHtml = '<img class="company-logo" src="data:' . $logoMime . ';base64,' . $logoBase64 . '" alt="Logo Serene">';
+        }
 
         $html = <<<HTML
 <!DOCTYPE html>
@@ -93,24 +101,50 @@ class InvoiceService
         }
 
         .header {
-            display: flex;
-            justify-content: space-between;
+            display: table;
+            width: 100%;
             border-bottom: 2px solid #333;
             padding: 10px 0 15px 0;
             margin-bottom: 15px;
             page-break-after: avoid;
         }
+        .header-left,
+        .header-right {
+            display: table-cell;
+            vertical-align: top;
+        }
+        .header-right {
+            width: 220px;
+            text-align: right;
+        }
+        .company-brand {
+            display: table;
+        }
+        .company-logo-wrap,
+        .company-info {
+            display: table-cell;
+            vertical-align: top;
+        }
+        .company-logo-wrap {
+            width: 66px;
+            padding-right: 10px;
+        }
+        .company-logo {
+            width: 56px;
+            height: 56px;
+            object-fit: contain;
+        }
         .company-info h1 {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: bold;
             margin: 0;
+            letter-spacing: 0.5px;
         }
         .company-info p {
             margin: 3px 0;
             font-size: 10px;
         }
         .invoice-meta {
-            text-align: right;
             page-break-after: avoid;
         }
         .invoice-meta p {
@@ -233,15 +267,22 @@ class InvoiceService
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <div class="company-info">
-                <h1>{$kostName}</h1>
-                <p>{$kostAlamat}</p>
-                <p>Telp: {$kostTelp}</p>
+            <div class="header-left">
+                <div class="company-brand">
+                    <div class="company-logo-wrap">{$logoHtml}</div>
+                    <div class="company-info">
+                        <h1>{$companyName}</h1>
+                        <p>Alamat: {$kostAlamat}</p>
+                        <p>No. Telp: {$kostTelp}</p>
+                    </div>
+                </div>
             </div>
-            <div class="invoice-meta">
-                <p>INVOICE</p>
-                <p style="font-size: 14px; color: #c62828;">{$invoiceNumber}</p>
-                <p>Tanggal: {$invoiceDate}</p>
+            <div class="header-right">
+                <div class="invoice-meta">
+                    <p>INVOICE</p>
+                    <p style="font-size: 14px; color: #c62828;">{$invoiceNumber}</p>
+                    <p>Tanggal: {$invoiceDate}</p>
+                </div>
             </div>
         </div>
 

@@ -130,8 +130,8 @@
             </div>
 
             <div class="form-group">
-                <label for="bukti_bayar_file">Upload Bukti Pembayaran</label>
-                <input type="file" name="bukti_bayar_file" id="bukti_bayar_file" class="form-control @error('bukti_bayar_file') is-invalid @enderror" accept="image/*,.pdf">
+                <label for="bukti_bayar_file">Upload Bukti Pembayaran <span class="text-danger">*</span></label>
+                <input type="file" name="bukti_bayar_file" id="bukti_bayar_file" class="form-control @error('bukti_bayar_file') is-invalid @enderror" accept="image/*,.pdf" required>
                 <small class="text-muted">JPG/PNG/PDF, maks 2 MB. Gambar akan dikompresi otomatis.</small>
                 @error('bukti_bayar_file')
                     <span class="invalid-feedback">{{ $message }}</span>

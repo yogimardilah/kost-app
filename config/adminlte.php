@@ -63,9 +63,9 @@ return [
     |
     */
 
-    'logo' => '<b>Kost</b>App',
+    'logo' => '<b>Serene</b>',
     'logo_img_alt' => 'Manajemen Kost',
-    'logo_img' => 'img/logo_kost2.jpeg',
+    'logo_img' => 'img/logo-new.jpeg',
     'logo_img_class' => 'brand-image img-circle elevation-3',
     'logo_img_xl' => null,
     'logo_img_xl_class' => 'brand-image-xs',
@@ -86,7 +86,7 @@ return [
     'auth_logo' => [
         'enabled' => true,
         'img' => [
-            'path' => 'img/logo_kost2.jpeg',
+            'path' => 'img/logo-new.jpeg',
             'alt' => 'Serene Kost',
             'class' => 'rounded-circle',
             'width' => 80,
@@ -113,7 +113,7 @@ return [
         'enabled' => true,
         'mode' => 'fullscreen',
         'img' => [
-            'path' => 'img/logo_kost2.jpeg',
+            'path' => 'img/logo-new.jpeg',
             'alt' => 'Serene Kost Preloader',
             'effect' => 'animation__shake',
             'width' => 60,
