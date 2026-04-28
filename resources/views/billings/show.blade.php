@@ -169,7 +169,12 @@
                 </div>
                 <div class="col-md-4">
                     <strong>Sisa Tagihan:</strong><br>
-                    Rp {{ number_format($billing->total_tagihan - $billing->payments->sum('jumlah'),0,',','.') }}
+                    Rp {{ number_format(max(0, (float) $billing->total_tagihan - (float) $billing->payments->sum('jumlah')),0,',','.') }}
+                    @if(((float) $billing->payments->sum('jumlah') - (float) $billing->total_tagihan) > 0)
+                        <div class="text-info mt-1">
+                            <small>Kelebihan: Rp {{ number_format(max(0, (float) $billing->payments->sum('jumlah') - (float) $billing->total_tagihan),0,',','.') }}</small>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

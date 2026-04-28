@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Billing;
 use App\Models\BillingDetail;
+use App\Models\Ledger;
 use App\Models\RoomOccupancy;
 use Carbon\Carbon;
 
@@ -48,12 +49,27 @@ class BillingService
             $unit = (int) $roomDaily;
             $qty = $days;
             $subtotal = $unit * $qty;
-            BillingDetail::create([
+            $detail = BillingDetail::create([
                 'billing_id'  => $billing->id,
                 'keterangan'  => 'Sewa Kamar ' . ($occupancy->room->nomor_kamar ?? '-') . ' - Harian (' . $qty . ' hari)',
                 'qty'         => $qty,
                 'harga'       => $unit,
                 'subtotal'    => $subtotal,
+            ]);
+            Ledger::create([
+                'consumer_id' => $billing->consumer_id,
+                'billing_id' => $billing->id,
+                'billing_detail_id' => $detail->id,
+                'payment_id' => null,
+                'room_id' => $billing->room_id,
+                'occupancy_id' => $occupancy->id,
+                'tanggal' => $billing->created_at,
+                'tipe' => 'debit',
+                'nominal' => $subtotal,
+                'keterangan' => $detail->keterangan,
+                'meta' => [
+                    'source' => 'billing_generate',
+                ],
             ]);
             $totalTagihan += $subtotal;
         } elseif ($roomMonthly > 0) {
@@ -63,12 +79,27 @@ class BillingService
             $subtotalRaw = $hargaPerHari * $days;
             $subtotal = (int) (round($subtotalRaw / 100) * 100);
             
-            BillingDetail::create([
+            $detail = BillingDetail::create([
                 'billing_id'  => $billing->id,
                 'keterangan'  => 'Sewa Kamar ' . ($occupancy->room->nomor_kamar ?? '-') . ' - Bulanan (Prorate: ' . $days . ' hari dari ' . $daysInMonth . ' hari)',
                 'qty'         => $days,
                 'harga'       => (int) round($hargaPerHari),
                 'subtotal'    => $subtotal,
+            ]);
+            Ledger::create([
+                'consumer_id' => $billing->consumer_id,
+                'billing_id' => $billing->id,
+                'billing_detail_id' => $detail->id,
+                'payment_id' => null,
+                'room_id' => $billing->room_id,
+                'occupancy_id' => $occupancy->id,
+                'tanggal' => $billing->created_at,
+                'tipe' => 'debit',
+                'nominal' => $subtotal,
+                'keterangan' => $detail->keterangan,
+                'meta' => [
+                    'source' => 'billing_generate',
+                ],
             ]);
             $totalTagihan += $subtotal;
         }
@@ -76,14 +107,29 @@ class BillingService
         // Add addons as billing details
         $addons = $occupancy->room->addons()->get();
         foreach ($addons as $addon) {
-            $addonHarga = $addon->harga ?? 0;
+            $addonHarga = round((float) ($addon->harga ?? 0), 0);
             if ($addonHarga > 0) {
-                BillingDetail::create([
+                $detail = BillingDetail::create([
                     'billing_id'  => $billing->id,
                     'keterangan'  => $addon->nama_addon,
                     'qty'         => 1,
                     'harga'       => $addonHarga,
                     'subtotal'    => $addonHarga,
+                ]);
+                Ledger::create([
+                    'consumer_id' => $billing->consumer_id,
+                    'billing_id' => $billing->id,
+                    'billing_detail_id' => $detail->id,
+                    'payment_id' => null,
+                    'room_id' => $billing->room_id,
+                    'occupancy_id' => $occupancy->id,
+                    'tanggal' => $billing->created_at,
+                    'tipe' => 'debit',
+                    'nominal' => $addonHarga,
+                    'keterangan' => $detail->keterangan,
+                    'meta' => [
+                        'source' => 'billing_generate',
+                    ],
                 ]);
                 $totalTagihan += $addonHarga;
             }

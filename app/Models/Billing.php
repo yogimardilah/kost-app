@@ -64,7 +64,8 @@ class Billing extends Model
      */
     public function getTotalDibayarAttribute()
     {
-        return $this->payments()->sum('jumlah');
+        $sum = (float) $this->payments()->sum('jumlah');
+        return round($sum, 0);
     }
 
     /**
@@ -72,7 +73,19 @@ class Billing extends Model
      */
     public function getSisaTagihanAttribute()
     {
-        return $this->total_tagihan - $this->total_dibayar;
+        $totalTagihan = round((float) ($this->total_tagihan ?? 0), 0);
+        $totalDibayar = round((float) ($this->total_dibayar ?? 0), 0);
+        return max(0, $totalTagihan - $totalDibayar);
+    }
+
+    /**
+     * Get overpaid amount (credit balance) for this billing.
+     */
+    public function getKelebihanBayarAttribute()
+    {
+        $totalTagihan = round((float) ($this->total_tagihan ?? 0), 0);
+        $totalDibayar = round((float) ($this->total_dibayar ?? 0), 0);
+        return max(0, $totalDibayar - $totalTagihan);
     }
 
     /**
@@ -80,8 +93,8 @@ class Billing extends Model
      */
     public function updateStatus()
     {
-        $totalDibayar = $this->total_dibayar;
-        $totalTagihan = $this->total_tagihan;
+        $totalDibayar = round((float) $this->total_dibayar, 0);
+        $totalTagihan = round((float) $this->total_tagihan, 0);
 
         if ($totalDibayar == 0) {
             $this->status = 'pending';

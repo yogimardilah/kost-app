@@ -7,6 +7,7 @@ use App\Models\Room;
 use App\Models\Consumer;
 use App\Models\Billing;
 use App\Models\BillingDetail;
+use App\Models\Ledger;
 use App\Models\Payment;
 use App\Http\Requests\StoreRoomOccupancyRequest;
 use App\Http\Requests\UpdateRoomOccupancyRequest;
@@ -86,12 +87,30 @@ class RoomOccupancyController extends Controller
                 if ($billing) {
                     $occ->billing_id = $billing->id;
                     $occ->billing_url = route('payments.create', ['billing' => $billing->id]);
-                    $occ->billing_status = $billing->status;
                     $occ->billing_invoice = $billing->invoice_number;
                     $occ->billing_total = $billing->total_tagihan;
                     
                     $totalPaid = \App\Models\Payment::where('billing_id', $billing->id)->sum('jumlah');
-                    $occ->billing_remaining = $billing->total_tagihan - $totalPaid;
+                    $totalPaid = round((float) $totalPaid, 0);
+                    $totalTagihan = round((float) $billing->total_tagihan, 0);
+                    $occ->billing_remaining = max(0, $totalTagihan - $totalPaid);
+
+                    // Compute & normalize status using whole Rupiah to avoid tiny decimal remainders.
+                    if ($totalTagihan <= 0) {
+                        $computedStatus = 'lunas';
+                    } elseif ($totalPaid <= 0) {
+                        $computedStatus = 'pending';
+                    } elseif ($totalPaid >= $totalTagihan) {
+                        $computedStatus = 'lunas';
+                    } else {
+                        $computedStatus = 'sebagian';
+                    }
+
+                    $occ->billing_status = $computedStatus;
+
+                    if ($billing->status !== $computedStatus) {
+                        $billing->update(['status' => $computedStatus]);
+                    }
                 }
 
                 // Always set complete URL - button will show when billing is paid/none
@@ -345,12 +364,14 @@ class RoomOccupancyController extends Controller
                 $rentType = $days < 30 ? 'Harian' : 'Bulanan';
             }
             $paid = Payment::where('billing_id', $billing->id)->sum('jumlah');
+            $paid = round((float) $paid, 0);
+            $totalTagihan = round((float) $billing->total_tagihan, 0);
             $billingSummary = [
                 'invoice' => $billing->invoice_number,
                 'status' => $billing->status,
                 'total' => $billing->total_tagihan,
                 'paid' => $paid,
-                'remaining' => $billing->total_tagihan - $paid,
+                'remaining' => max(0, $totalTagihan - $paid),
             ];
         }
 
@@ -428,16 +449,39 @@ class RoomOccupancyController extends Controller
             $newTotal = ($newRoom->harga_harian ?? 0) * $days;
         }
 
-        $delta = $newTotal - $oldTotal;
+        $delta = round((float) ($newTotal - $oldTotal), 0);
 
         if ($delta !== 0) {
-            BillingDetail::create([
+            $detail = BillingDetail::create([
                 'billing_id' => $billing->id,
                 'keterangan' => 'Upgrade kamar dari ' . ($oldRoom->nomor_kamar ?? '-') . ' ke ' . ($newRoom->nomor_kamar ?? '-') . ' (' . $upgradeFrom->format('d/m/Y') . ' s/d ' . $upgradeTo->format('d/m/Y') . ')',
                 'qty' => 1,
                 'harga' => $delta,
                 'subtotal' => $delta,
             ]);
+
+            $tipe = $delta >= 0 ? 'debit' : 'kredit';
+            $nominal = abs((float) $delta);
+            Ledger::create([
+                'consumer_id' => $billing->consumer_id,
+                'billing_id' => $billing->id,
+                'billing_detail_id' => $detail->id,
+                'payment_id' => null,
+                'room_id' => $newRoom->id,
+                'occupancy_id' => $occupancy->id,
+                'tanggal' => now(),
+                'tipe' => $tipe,
+                'nominal' => $nominal,
+                'keterangan' => $detail->keterangan,
+                'meta' => [
+                    'source' => 'upgrade_delta',
+                    'old_room_id' => $oldRoom->id ?? null,
+                    'new_room_id' => $newRoom->id,
+                    'upgrade_from' => $upgradeFrom->toDateString(),
+                    'upgrade_to' => $upgradeTo->toDateString(),
+                ],
+            ]);
+
             $billing->increment('total_tagihan', $delta);
 
             if ($billing->status === 'lunas') {

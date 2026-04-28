@@ -21,9 +21,20 @@
                 <strong>Kamar:</strong> {{ $billing->room->nomor_kamar ?? '-' }}
             </div>
             <div class="col-md-6 text-right">
+                @php
+                    $statusRaw = strtolower($computedStatus ?? $billing->status ?? '');
+                    $statusLabel = $statusRaw === 'lunas' ? 'Lunas' : ($statusRaw === 'sebagian' ? 'Belum Lunas (Sebagian)' : 'Belum Dibayar');
+                    $statusClass = $statusRaw === 'lunas' ? 'badge-success' : ($statusRaw === 'sebagian' ? 'badge-warning' : 'badge-danger');
+                @endphp
+                <strong>Status:</strong> <span class="badge {{ $statusClass }}">{{ $statusLabel }}</span><br>
                 <strong>Total Tagihan:</strong> <span class="text-primary">Rp {{ number_format($billing->total_tagihan,0,',','.') }}</span><br>
                 <strong>Sudah Dibayar:</strong> <span class="text-success">Rp {{ number_format($totalPaid,0,',','.') }}</span><br>
-                <strong>Sisa Tagihan:</strong> <span class="text-danger"><strong>Rp {{ number_format($remaining,0,',','.') }}</strong></span>
+                @if(($overpaid ?? 0) > 0)
+                    <strong>Kelebihan Bayar:</strong> <span class="text-info"><strong>Rp {{ number_format($overpaid,0,',','.') }}</strong></span><br>
+                    <strong>Sisa Tagihan:</strong> <span class="text-danger"><strong>Rp 0</strong></span>
+                @else
+                    <strong>Sisa Tagihan:</strong> <span class="text-danger"><strong>Rp {{ number_format($remaining,0,',','.') }}</strong></span>
+                @endif
             </div>
         </div>
         
@@ -38,16 +49,28 @@
                         <th>Qty</th>
                         <th>Harga</th>
                         <th>Subtotal</th>
+                        <th>Dibayar</th>
+                        <th>Sisa</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($billingDetails as $i => $detail)
+                    @php
+                        $alloc = $detailAllocations[$detail->id] ?? ['paid' => 0, 'remaining' => (float)($detail->subtotal ?? 0), 'status' => 'belum'];
+                        $rowStatus = $alloc['status'] ?? 'belum';
+                        $badgeClass = $rowStatus === 'lunas' ? 'badge-success' : ($rowStatus === 'sebagian' ? 'badge-warning' : ($rowStatus === 'n/a' ? 'badge-secondary' : 'badge-danger'));
+                        $badgeText = $rowStatus === 'lunas' ? 'Lunas' : ($rowStatus === 'sebagian' ? 'Sebagian' : ($rowStatus === 'n/a' ? 'N/A' : 'Belum Bayar'));
+                    @endphp
                     <tr>
                         <td>{{ $i+1 }}</td>
                         <td>{{ $detail->keterangan }}</td>
                         <td>{{ $detail->qty }}</td>
                         <td>Rp {{ number_format($detail->harga,0,',','.') }}</td>
                         <td>Rp {{ number_format($detail->subtotal,0,',','.') }}</td>
+                        <td>Rp {{ number_format($alloc['paid'] ?? 0,0,',','.') }}</td>
+                        <td>Rp {{ number_format($alloc['remaining'] ?? 0,0,',','.') }}</td>
+                        <td><span class="badge {{ $badgeClass }}">{{ $badgeText }}</span></td>
                     </tr>
                     @endforeach
                 </tbody>
@@ -62,8 +85,14 @@
                     </tr>
                     <tr class="bg-danger text-white">
                         <th colspan="4" class="text-right">Sisa Tagihan:</th>
-                        <th>Rp {{ number_format($remaining,0,',','.') }}</th>
+                        <th>Rp {{ number_format(($overpaid ?? 0) > 0 ? 0 : $remaining,0,',','.') }}</th>
                     </tr>
+                    @if(($overpaid ?? 0) > 0)
+                    <tr class="bg-info text-white">
+                        <th colspan="4" class="text-right">Kelebihan Bayar:</th>
+                        <th>Rp {{ number_format($overpaid,0,',','.') }}</th>
+                    </tr>
+                    @endif
                 </tfoot>
             </table>
         </div>

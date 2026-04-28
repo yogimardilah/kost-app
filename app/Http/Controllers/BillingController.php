@@ -40,6 +40,23 @@ class BillingController extends Controller
 
     public function show(Billing $billing)
     {
+        $totalPaid = round((float) $billing->payments()->sum('jumlah'), 0);
+        $totalTagihan = round((float) $billing->total_tagihan, 0);
+
+        if ($totalTagihan <= 0) {
+            $computedStatus = 'lunas';
+        } elseif ($totalPaid <= 0) {
+            $computedStatus = 'pending';
+        } elseif ($totalPaid >= $totalTagihan) {
+            $computedStatus = 'lunas';
+        } else {
+            $computedStatus = 'sebagian';
+        }
+
+        if ($billing->status !== $computedStatus) {
+            $billing->update(['status' => $computedStatus]);
+        }
+
         return view('billings.show', compact('billing'));
     }
 
