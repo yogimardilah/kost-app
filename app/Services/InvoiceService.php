@@ -68,7 +68,7 @@ class InvoiceService
         $statusUpper = strtoupper($status);
         $printedAt = now()->format('Y-m-d H:i:s');
 
-        $companyName = 'Serene';
+        $companyName =  $kost->nama_kost ?? '';
         $logoHtml = '';
         $logoPath = public_path('img/logo-new.jpeg');
         if (is_file($logoPath)) {
@@ -126,12 +126,12 @@ class InvoiceService
             vertical-align: top;
         }
         .company-logo-wrap {
-            width: 66px;
-            padding-right: 10px;
+            width: 82px;
+            padding-right: 5px;
         }
         .company-logo {
-            width: 56px;
-            height: 56px;
+            width: 82px;
+            height: 82px;
             object-fit: contain;
         }
         .company-info h1 {
