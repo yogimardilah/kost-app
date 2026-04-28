@@ -68,7 +68,7 @@ class InvoiceService
         $statusUpper = strtoupper($status);
         $printedAt = now()->format('Y-m-d H:i:s');
 
-        $companyName =  $kost->nama_kost ?? '';
+        $companyName =  'Serene Co-Living';
         $logoHtml = '';
         $logoPath = public_path('img/logo-new.jpeg');
         if (is_file($logoPath)) {
