@@ -42,7 +42,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    Route::resource('billings', App\Http\Controllers\BillingController::class);
+    Route::resource('billings', App\Http\Controllers\BillingController::class)->except(['destroy']);
+    Route::delete('billings/{billing}', [App\Http\Controllers\BillingController::class, 'destroy'])
+        ->name('billings.destroy')
+        ->middleware('role:owner');
+    Route::patch('billings/{billing}/cancel', [App\Http\Controllers\BillingController::class, 'cancel'])
+        ->name('billings.cancel')
+        ->middleware('role:owner');
     Route::get('billings/{billing}/download-invoice', [App\Http\Controllers\BillingController::class, 'downloadInvoice'])->name('billings.downloadInvoice');
     Route::get('billings-reminders', [App\Http\Controllers\BillingController::class, 'reminders'])->name('billings.reminders');
     Route::resource('payments', App\Http\Controllers\PaymentController::class);

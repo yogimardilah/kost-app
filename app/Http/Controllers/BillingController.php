@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Billing;
 use App\Services\InvoiceService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use PDF;
 
@@ -35,7 +36,9 @@ class BillingController extends Controller
         }
 
         $billings = $query->paginate(15)->withQueryString();
-        return view('billings.index', compact('billings'));
+        $isOwner = $this->isOwner();
+
+        return view('billings.index', compact('billings', 'isOwner'));
     }
 
     public function show(Billing $billing)
@@ -53,7 +56,7 @@ class BillingController extends Controller
             $computedStatus = 'sebagian';
         }
 
-        if ($billing->status !== $computedStatus) {
+        if ($billing->status !== 'dibatalkan' && $billing->status !== $computedStatus) {
             $billing->update(['status' => $computedStatus]);
         }
 
@@ -62,20 +65,14 @@ class BillingController extends Controller
 
     public function edit(Billing $billing)
     {
-        // Only owner can edit
-        if (auth()->user()->role_id !== 1) {
-            abort(403, 'Unauthorized action.');
-        }
+        $this->authorizeOwner();
 
         return view('billings.edit', compact('billing'));
     }
 
-    public function update(\Illuminate\Http\Request $request, Billing $billing)
+    public function update(Request $request, Billing $billing)
     {
-        // Only owner can update
-        if (auth()->user()->role_id !== 1) {
-            abort(403, 'Unauthorized action.');
-        }
+        $this->authorizeOwner();
 
         $request->validate([
             'periode_awal' => 'required|date',
@@ -196,6 +193,33 @@ class BillingController extends Controller
             ->with('success', 'Billing dan detail berhasil diupdate!');
     }
 
+    public function cancel(Billing $billing)
+    {
+        $this->authorizeOwner();
+
+        if ($billing->status === 'dibatalkan') {
+            return redirect()->route('billings.index')
+                ->with('info', 'Transaksi billing sudah dibatalkan sebelumnya.');
+        }
+
+        $billing->update(['status' => 'dibatalkan']);
+        \App\Models\BillingReminder::where('billing_id', $billing->id)->delete();
+
+        return redirect()->route('billings.index')
+            ->with('success', 'Transaksi billing berhasil dibatalkan.');
+    }
+
+    public function destroy(Billing $billing)
+    {
+        $this->authorizeOwner();
+
+        $invoiceNumber = $billing->invoice_number;
+        $billing->delete();
+
+        return redirect()->route('billings.index')
+            ->with('success', "Billing {$invoiceNumber} berhasil dihapus.");
+    }
+
     /**
      * Download invoice as PDF.
      */
@@ -225,5 +249,25 @@ class BillingController extends Controller
     {
         $summary = \App\Services\ReminderService::getReminderSummary();
         return view('billings.reminders', compact('summary'));
+    }
+
+    private function authorizeOwner(): void
+    {
+        abort_unless($this->isOwner(), 403, 'Unauthorized action.');
+    }
+
+    private function isOwner(): bool
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return false;
+        }
+
+        if (!$user->relationLoaded('role')) {
+            $user->load('role');
+        }
+
+        return $user->role_id === 1 || ($user->role->nama ?? null) === 'owner';
     }
 }

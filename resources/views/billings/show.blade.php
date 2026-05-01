@@ -55,7 +55,7 @@
             <div class="col-md-3">
                 <div class="info-box">
                     <span class="info-box-icon 
-                        {{ $billing->status == 'lunas' ? 'bg-success' : ($billing->status == 'sebagian' ? 'bg-warning' : 'bg-danger') }}">
+                        {{ $billing->status == 'lunas' ? 'bg-success' : ($billing->status == 'sebagian' ? 'bg-warning' : ($billing->status == 'dibatalkan' ? 'bg-secondary' : 'bg-danger')) }}">
                         <i class="fas fa-info-circle"></i>
                     </span>
                     <div class="info-box-content">
@@ -179,7 +179,11 @@
             </div>
         </div>
 
-        @if($billing->status !== 'lunas')
+        @if($billing->status === 'dibatalkan')
+            <div class="alert alert-secondary mt-3">
+                <strong>Status:</strong> Transaksi ini telah dibatalkan
+            </div>
+        @elseif($billing->status !== 'lunas')
             <div class="mt-3">
                 <a href="{{ route('payments.create', ['billing' => $billing->id]) }}" class="btn btn-success">
                     <i class="fas fa-credit-card"></i> Catat Pembayaran

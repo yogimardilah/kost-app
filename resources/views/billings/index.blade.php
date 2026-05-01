@@ -41,6 +41,9 @@
                         <th>Periode</th>
                         <th>Total</th>
                         <th>Status</th>
+                        @if($isOwner)
+                            <th>Aksi</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
@@ -67,10 +70,31 @@
                                 <span class="badge badge-success">{{ ucfirst($b->status) }}</span>
                             @elseif($b->status === 'sebagian')
                                 <span class="badge badge-warning">{{ ucfirst($b->status) }}</span>
+                            @elseif($b->status === 'dibatalkan')
+                                <span class="badge badge-secondary">{{ ucfirst($b->status) }}</span>
                             @else
                                 <span class="badge badge-danger">{{ ucfirst($b->status) }}</span>
                             @endif
                         </td>
+                        @if($isOwner)
+                            <td>
+                                <div class="d-flex" style="gap: 8px;">
+                                    @if($b->status !== 'dibatalkan')
+                                        <form action="{{ route('billings.cancel', $b) }}" method="POST" onsubmit="return confirm('Yakin ingin membatalkan transaksi ini?')">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit" class="btn btn-sm btn-warning">Batalkan</button>
+                                        </form>
+                                    @endif
+
+                                    <form action="{{ route('billings.destroy', $b) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus billing ini? Data pembayaran dan detail akan ikut terhapus.')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
+                                    </form>
+                                </div>
+                            </td>
+                        @endif
                     </tr>
                     @endforeach
                 </tbody>
