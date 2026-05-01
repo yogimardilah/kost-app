@@ -360,7 +360,7 @@ class RoomOccupancyController extends Controller
         $billingSummary = null;
         if ($billing) {
             if ($billing->periode_awal && $billing->periode_akhir) {
-                $days = max(1, Carbon::parse($billing->periode_awal)->diffInDays(Carbon::parse($billing->periode_akhir)));
+                $days = max(1, Carbon::parse($billing->periode_awal)->diffInDays(Carbon::parse($billing->periode_akhir)) + 1);
                 $rentType = $days < 30 ? 'Harian' : 'Bulanan';
             }
             $paid = Payment::where('billing_id', $billing->id)->sum('jumlah');
@@ -424,7 +424,8 @@ class RoomOccupancyController extends Controller
         // Use custom date range provided by user
         $upgradeFrom = Carbon::parse($data['upgrade_from']);
         $upgradeTo = Carbon::parse($data['upgrade_to']);
-        $days = max(1, $upgradeFrom->diffInDays($upgradeTo));
+        // Inclusive date range: from and to are both charged as active rental days.
+        $days = max(1, $upgradeFrom->diffInDays($upgradeTo) + 1);
 
         // Determine pricing based on current rent type
         if ($data['rent_type'] === 'Bulanan') {

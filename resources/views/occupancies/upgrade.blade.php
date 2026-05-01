@@ -54,6 +54,7 @@
 
                 <div id="pricePreview" class="alert alert-info" style="display:none;">
                     <strong>Perkiraan Selisih Harga:</strong><br>
+                    <span class="badge badge-light mb-2">Hari dihitung inklusif (tanggal mulai dan tanggal akhir ikut dihitung)</span><br>
                     <span id="previewText"></span>
                 </div>
 
@@ -90,6 +91,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const rentType = '{{ $rentType ?? "-" }}';
     const roomsData = {!! json_encode($rooms->map(function($r) { return ['id' => $r->id, 'nomor' => $r->nomor_kamar, 'harga' => $r->harga, 'harian' => $r->harga_harian]; })->toArray()) !!};
 
+    function asNumber(value) {
+        const n = Number(value);
+        return Number.isFinite(n) ? n : 0;
+    }
+
     function calculatePreview() {
         const fromDate = new Date(upgradeFrom.value);
         const toDate = new Date(upgradeTo.value);
@@ -99,39 +105,47 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const days = Math.max(1, Math.ceil((toDate - fromDate) / (1000 * 60 * 60 * 24)));
+        const daysDiff = Math.ceil((toDate - fromDate) / (1000 * 60 * 60 * 24));
+        // Inclusive date range to keep preview aligned with backend billing logic.
+        const days = Math.max(1, daysDiff + 1);
         const newRoomId = roomSelect.value;
         const newRoom = roomsData.find(r => r.id == newRoomId);
+
+        if (!newRoom) {
+            pricePreview.style.display = 'none';
+            return;
+        }
+
+        const currentMonthlyUnit = asNumber(currentRoomPrice);
+        const currentDailyUnit = asNumber(currentRoomHarianPrice);
+        const newMonthlyUnit = asNumber(newRoom.harga);
+        const newDailyUnit = asNumber(newRoom.harian);
 
         let oldTotal, newTotal, oldBreakdown, newBreakdown;
 
         if (rentType === 'Bulanan') {
             // Always use monthly logic for old room
             if (days <= 30) {
-                oldTotal = currentRoomPrice;
-                oldBreakdown = `Rp ${currentRoomPrice.toLocaleString('id-ID')} (bulanan, ${days} hari)`;
+                oldTotal = currentMonthlyUnit;
+                oldBreakdown = `Rp ${currentMonthlyUnit.toLocaleString('id-ID')} (bulanan, ${days} hari)`;
             } else {
                 const remainingDays = days - 30;
-                oldTotal = currentRoomPrice + (currentRoomHarianPrice * remainingDays);
-                oldBreakdown = `Rp ${currentRoomPrice.toLocaleString('id-ID')} (bulanan) + Rp ${currentRoomHarianPrice.toLocaleString('id-ID')}/hari × ${remainingDays} hari`;
+                oldTotal = currentMonthlyUnit + (currentDailyUnit * remainingDays);
+                oldBreakdown = `Rp ${currentMonthlyUnit.toLocaleString('id-ID')} (bulanan) + Rp ${currentDailyUnit.toLocaleString('id-ID')}/hari × ${remainingDays} hari`;
             }
 
             // Determine new room type based on days
             if (days <= 30) {
-                const newMonthlyUnit = newRoom.harga || 0;
                 newTotal = newMonthlyUnit;
                 newBreakdown = `Rp ${newMonthlyUnit.toLocaleString('id-ID')} (bulanan, ${days} hari)`;
             } else {
                 const remainingDays = days - 30;
-                const newMonthlyUnit = newRoom.harga || 0;
-                const newDailyUnit = newRoom.harian || 0;
                 newTotal = newMonthlyUnit + (newDailyUnit * remainingDays);
                 newBreakdown = `Rp ${newMonthlyUnit.toLocaleString('id-ID')} (bulanan) + Rp ${newDailyUnit.toLocaleString('id-ID')}/hari × ${remainingDays} hari`;
             }
         } else {
             // Harian: always use daily pricing
-            const oldDailyUnit = currentRoomHarianPrice;
-            const newDailyUnit = newRoom.harian || 0;
+            const oldDailyUnit = currentDailyUnit;
             oldTotal = oldDailyUnit * days;
             newTotal = newDailyUnit * days;
             oldBreakdown = `Rp ${oldDailyUnit.toLocaleString('id-ID')}/hari × ${days} hari`;
@@ -140,7 +154,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const delta = newTotal - oldTotal;
 
-        let previewHTML = `<div style="margin-bottom: 10px;"><strong>Periode: ${days} hari (Tipe: ${rentType})</strong> (${upgradeFrom.value} s/d ${upgradeTo.value})</div>`;
+        let previewHTML = `<div style="margin-bottom: 10px;"><strong>Periode: ${days} hari inklusif (Tipe: ${rentType})</strong> (${upgradeFrom.value} s/d ${upgradeTo.value})</div>`;
         previewHTML += `<div style="margin-bottom: 8px;"><strong>Harga Lama:</strong> ${oldBreakdown}<br><span style="margin-left: 20px;">= Rp ${oldTotal.toLocaleString('id-ID')}</span></div>`;
         previewHTML += `<div style="margin-bottom: 8px;"><strong>Harga Baru:</strong> ${newBreakdown}<br><span style="margin-left: 20px;">= Rp ${newTotal.toLocaleString('id-ID')}</span></div>`;
         if (delta > 0) {
