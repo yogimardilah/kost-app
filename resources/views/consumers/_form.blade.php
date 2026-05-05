@@ -114,6 +114,7 @@
         </small>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/compressorjs@1.2.1/dist/compressor.min.js"></script>
     <script>
         function previewFile(input) {
             const preview = document.getElementById('newFilePreview');
@@ -143,6 +144,44 @@
                 preview.style.display = 'none';
             }
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInput = document.getElementById('tanda_pengenal');
+            if (!fileInput) {
+                return;
+            }
+
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files && e.target.files[0];
+                if (!file) {
+                    return;
+                }
+
+                // Compress only image files; keep PDF untouched.
+                if (!(file.type && file.type.startsWith('image/'))) {
+                    return;
+                }
+
+                new Compressor(file, {
+                    quality: 0.65,
+                    maxWidth: 1600,
+                    maxHeight: 1600,
+                    convertSize: 500000,
+                    success(result) {
+                        const compressedFile = new File([result], file.name, { type: result.type, lastModified: Date.now() });
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(compressedFile);
+                        fileInput.files = dataTransfer.files;
+
+                        // Refresh preview with compressed content.
+                        previewFile(fileInput);
+                    },
+                    error(err) {
+                        console.error('Compression failed:', err);
+                    }
+                });
+            });
+        });
     </script>
 
     <div class="form-group">
@@ -155,6 +194,13 @@
             </span>
         </button>
         <a href="{{ route('consumers.index') }}" class="btn btn-secondary">Batal</a>
+
+        <div id="consumerSubmitLoading" class="mt-3" style="display: none; max-width: 420px;">
+            <div class="progress" style="height: 10px;">
+                <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 100%"></div>
+            </div>
+            <small class="text-muted d-block mt-1">Menyimpan data penyewa, mohon tunggu...</small>
+        </div>
     </div>
 </form>
 
@@ -162,6 +208,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('consumerForm');
         const submitBtn = document.getElementById('submitConsumerBtn');
+        const submitLoading = document.getElementById('consumerSubmitLoading');
 
         if (!form || !submitBtn) {
             return;
@@ -185,6 +232,10 @@
             if (defaultLabel && loadingLabel) {
                 defaultLabel.style.display = 'none';
                 loadingLabel.style.display = 'inline';
+            }
+
+            if (submitLoading) {
+                submitLoading.style.display = 'block';
             }
         });
     });

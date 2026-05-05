@@ -42,15 +42,15 @@ class ConsumerController extends Controller
         $data['nik'] = trim((string) ($data['nik'] ?? ''));
 
         // Lock per NIK to avoid race condition when the submit request is sent twice.
-        $lock = Cache::lock('consumer:create:nik:' . md5($data['nik']), 10);
+        $lock = Cache::lock('consumer:create:nik:' . md5($data['nik']), 5);
 
         try {
-            $lock->block(3);
+            $lock->block(1);
 
             $existing = Consumer::where('nik', $data['nik'])->first();
             if ($existing) {
                 if ($this->isSameConsumerPayload($existing, $data) && $existing->created_at && $existing->created_at->gt(now()->subMinutes(2))) {
-                    return redirect()->route('consumers.index')->with('success', 'Data penyewa sudah tersimpan. Permintaan ganda diabaikan.');
+                    return redirect()->route('consumers.index')->with('success', 'Data penyewa sudah tersimpan.');
                 }
 
                 return back()->withErrors(['nik' => 'NIK sudah terdaftar'])->withInput();
@@ -68,7 +68,7 @@ class ConsumerController extends Controller
                 $existing = Consumer::where('nik', $data['nik'])->first();
 
                 if ($existing && $this->isSameConsumerPayload($existing, $data)) {
-                    return redirect()->route('consumers.index')->with('success', 'Data penyewa sudah tersimpan. Permintaan ganda diabaikan.');
+                    return redirect()->route('consumers.index')->with('success', 'Data penyewa sudah tersimpan.');
                 }
 
                 return back()->withErrors(['nik' => 'NIK sudah terdaftar'])->withInput();
@@ -128,6 +128,19 @@ class ConsumerController extends Controller
 
             // For non-JPEG/PNG, store normally (GIF, WebP might have issues)
             if (!in_array($mimeType, ['image/jpeg', 'image/jpg', 'image/png'])) {
+                return $file->store($directory, 'public');
+            }
+
+            // Skip server-side compression for already-small files to speed up request.
+            $fileSize = (int) ($file->getSize() ?? 0);
+            if ($fileSize > 0 && $fileSize <= 700 * 1024) {
+                return $file->store($directory, 'public');
+            }
+
+            // Skip heavy processing when image dimensions are already moderate.
+            $imageInfo = @getimagesize($file->getRealPath());
+            $width = (int) ($imageInfo[0] ?? 0);
+            if ($width > 0 && $width <= 1400) {
                 return $file->store($directory, 'public');
             }
 
