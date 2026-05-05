@@ -7,6 +7,8 @@ use App\Http\Requests\StoreConsumerRequest;
 use App\Http\Requests\UpdateConsumerRequest;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Database\QueryException;
 
 class ConsumerController extends Controller
 {
@@ -36,13 +38,46 @@ class ConsumerController extends Controller
     public function store(StoreConsumerRequest $request)
     {
         $data = $request->validated();
-        
-        if ($request->hasFile('tanda_pengenal')) {
-            $data['tanda_pengenal'] = $this->compressAndSaveImage($request->file('tanda_pengenal'));
+
+        $data['nik'] = trim((string) ($data['nik'] ?? ''));
+
+        // Lock per NIK to avoid race condition when the submit request is sent twice.
+        $lock = Cache::lock('consumer:create:nik:' . md5($data['nik']), 10);
+
+        try {
+            $lock->block(3);
+
+            $existing = Consumer::where('nik', $data['nik'])->first();
+            if ($existing) {
+                if ($this->isSameConsumerPayload($existing, $data) && $existing->created_at && $existing->created_at->gt(now()->subMinutes(2))) {
+                    return redirect()->route('consumers.index')->with('success', 'Data penyewa sudah tersimpan. Permintaan ganda diabaikan.');
+                }
+
+                return back()->withErrors(['nik' => 'NIK sudah terdaftar'])->withInput();
+            }
+
+            if ($request->hasFile('tanda_pengenal')) {
+                $data['tanda_pengenal'] = $this->compressAndSaveImage($request->file('tanda_pengenal'));
+            }
+
+            Consumer::create($data);
+            return redirect()->route('consumers.index')->with('success', 'Penyewa berhasil ditambahkan');
+        } catch (QueryException $e) {
+            // Fallback protection if duplicate insert happens at DB layer.
+            if ((string) $e->getCode() === '23000') {
+                $existing = Consumer::where('nik', $data['nik'])->first();
+
+                if ($existing && $this->isSameConsumerPayload($existing, $data)) {
+                    return redirect()->route('consumers.index')->with('success', 'Data penyewa sudah tersimpan. Permintaan ganda diabaikan.');
+                }
+
+                return back()->withErrors(['nik' => 'NIK sudah terdaftar'])->withInput();
+            }
+
+            throw $e;
+        } finally {
+            optional($lock)->release();
         }
-        
-        Consumer::create($data);
-        return redirect()->route('consumers.index')->with('success', 'Penyewa berhasil ditambahkan');
     }
 
     public function edit(Consumer $consumer)
@@ -174,5 +209,20 @@ class ConsumerController extends Controller
             Log::error('Image compression failed: ' . $e->getMessage());
             return $file->store($directory, 'public');
         }
+    }
+
+    /**
+     * Compare important fields to detect duplicate submit of same payload.
+     */
+    private function isSameConsumerPayload(Consumer $consumer, array $data): bool
+    {
+        $normalize = function ($value) {
+            return trim((string) ($value ?? ''));
+        };
+
+        return $normalize($consumer->nik) === $normalize($data['nik'] ?? '')
+            && strcasecmp($normalize($consumer->nama), $normalize($data['nama'] ?? '')) === 0
+            && $normalize($consumer->no_hp) === $normalize($data['no_hp'] ?? '')
+            && strcasecmp($normalize($consumer->kendaraan), $normalize($data['kendaraan'] ?? '')) === 0;
     }
 }

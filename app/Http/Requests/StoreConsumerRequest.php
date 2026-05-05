@@ -14,7 +14,7 @@ class StoreConsumerRequest extends FormRequest
     public function rules()
     {
         return [
-            'nik' => 'required|string|max:20|unique:consumers,nik',
+            'nik' => 'required|string|max:20',
             'nama' => 'required|string|max:255',
             'no_hp' => 'required|string|max:20',
             'kendaraan' => 'nullable|string|max:255',
