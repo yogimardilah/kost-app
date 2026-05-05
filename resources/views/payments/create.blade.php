@@ -103,7 +103,7 @@
 
 <div class="card">
     <div class="card-body">
-        <form action="{{ route('payments.store') }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('payments.store') }}" method="POST" enctype="multipart/form-data" id="paymentCreateForm">
             @csrf
 
             <div class="form-group">
@@ -111,7 +111,8 @@
                 <select name="billing_id" id="billing_id" class="form-control @error('billing_id') is-invalid @enderror" required>
                     <option value="">-- Pilih Invoice --</option>
                     @foreach($billings as $b)
-                        <option value="{{ $b->id }}" 
+                        <option value="{{ $b->id }}"
+                            data-remaining="{{ (int) ($b->remaining ?? 0) }}"
                             {{ old('billing_id') == $b->id || ($billing && $billing->id == $b->id) ? 'selected' : '' }}>
                             {{ $b->invoice_number }} - {{ $b->consumer->nama ?? '-' }} (Rp {{ number_format($b->total_tagihan,0,',','.') }})
                         </option>
@@ -134,10 +135,11 @@
             <div class="form-group">
                 <label for="jumlah">Jumlah Pembayaran <span class="text-danger">*</span></label>
                 <input type="number" name="jumlah" id="jumlah" class="form-control @error('jumlah') is-invalid @enderror" 
-                    step="0.01" min="0" value="{{ old('jumlah') }}" required>
+                    step="1" min="1" value="{{ old('jumlah', $billing ? (int) $remaining : '') }}" max="{{ old('billing_id', $billing->id ?? '') ? (int) $remaining : '' }}" required>
                 @error('jumlah')
                     <span class="invalid-feedback">{{ $message }}</span>
                 @enderror
+                <small id="jumlah-help" class="text-muted d-block mt-1"></small>
             </div>
 
             <div class="form-group">
@@ -179,7 +181,12 @@
             </div>
 
             <div class="form-group">
-                <button type="submit" class="btn btn-primary">Simpan Pembayaran</button>
+                <button type="submit" class="btn btn-primary" id="submitPaymentBtn">
+                    <span class="submit-label-default">Simpan Pembayaran</span>
+                    <span class="submit-label-loading" style="display: none;">
+                        <i class="fas fa-spinner fa-spin"></i> Menyimpan...
+                    </span>
+                </button>
                 <a href="{{ route('billings.index') }}" class="btn btn-secondary">Batal</a>
             </div>
         </form>
@@ -191,10 +198,125 @@
 <script src="https://cdn.jsdelivr.net/npm/compressorjs@1.2.1/dist/compressor.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const paymentForm = document.getElementById('paymentCreateForm');
+    const submitPaymentBtn = document.getElementById('submitPaymentBtn');
+    const submitDefaultLabel = submitPaymentBtn ? submitPaymentBtn.querySelector('.submit-label-default') : null;
+    const billingSelect = document.getElementById('billing_id');
+    const amountInput = document.getElementById('jumlah');
+    const amountHelp = document.getElementById('jumlah-help');
     const fileInput = document.getElementById('bukti_bayar_file');
     const preview = document.getElementById('bukti-preview');
     const previewImg = document.getElementById('bukti-preview-img');
     const previewName = document.getElementById('bukti-preview-name');
+
+    const formatRupiah = (value) => {
+        const n = Number(value || 0);
+        return 'Rp ' + n.toLocaleString('id-ID');
+    };
+
+    const setSubmitAvailability = (enabled, message) => {
+        if (!submitPaymentBtn) {
+            return;
+        }
+
+        submitPaymentBtn.disabled = !enabled;
+        submitPaymentBtn.classList.toggle('disabled', !enabled);
+
+        if (submitDefaultLabel && !paymentForm.dataset.submitting) {
+            if (!enabled && message) {
+                submitDefaultLabel.textContent = message;
+            } else {
+                submitDefaultLabel.textContent = 'Simpan Pembayaran';
+            }
+        }
+    };
+
+    const updateAmountLimitFromBilling = () => {
+        if (!billingSelect || !amountInput) {
+            return;
+        }
+
+        const selected = billingSelect.options[billingSelect.selectedIndex];
+        const remaining = selected ? Number(selected.getAttribute('data-remaining') || 0) : 0;
+
+        if (!billingSelect.value) {
+            amountInput.removeAttribute('max');
+            amountInput.value = '';
+            if (amountHelp) {
+                amountHelp.textContent = 'Pilih invoice terlebih dahulu.';
+            }
+            setSubmitAvailability(false, 'Pilih Invoice Dulu');
+            return;
+        }
+
+        amountInput.max = String(remaining);
+
+        if (!amountInput.value || Number(amountInput.value) > remaining) {
+            amountInput.value = remaining > 0 ? String(remaining) : '';
+        }
+
+        if (amountHelp) {
+            amountHelp.textContent = remaining > 0
+                ? 'Maksimal pembayaran: ' + formatRupiah(remaining) + ' (sisa tagihan).'
+                : 'Tagihan ini sudah lunas.';
+        }
+
+        if (remaining > 0) {
+            setSubmitAvailability(true);
+        } else {
+            setSubmitAvailability(false, 'Tagihan Sudah Lunas');
+        }
+    };
+
+    if (billingSelect) {
+        billingSelect.addEventListener('change', updateAmountLimitFromBilling);
+        updateAmountLimitFromBilling();
+    }
+
+    if (amountInput) {
+        amountInput.addEventListener('input', function () {
+            const max = Number(amountInput.max || 0);
+            if (!max) {
+                return;
+            }
+            if (Number(amountInput.value) > max) {
+                amountInput.value = String(max);
+            }
+        });
+    }
+
+    if (paymentForm && submitPaymentBtn) {
+        let isSubmitting = false;
+
+        paymentForm.addEventListener('submit', function (event) {
+            const selected = billingSelect ? billingSelect.options[billingSelect.selectedIndex] : null;
+            const remaining = selected ? Number(selected.getAttribute('data-remaining') || 0) : 0;
+
+            if (remaining <= 0) {
+                event.preventDefault();
+                setSubmitAvailability(false, 'Tagihan Sudah Lunas');
+                return;
+            }
+
+            if (isSubmitting) {
+                event.preventDefault();
+                return;
+            }
+
+            isSubmitting = true;
+            paymentForm.dataset.submitting = '1';
+            submitPaymentBtn.disabled = true;
+            submitPaymentBtn.classList.add('disabled');
+
+            const defaultLabel = submitPaymentBtn.querySelector('.submit-label-default');
+            const loadingLabel = submitPaymentBtn.querySelector('.submit-label-loading');
+
+            if (defaultLabel && loadingLabel) {
+                defaultLabel.style.display = 'none';
+                loadingLabel.style.display = 'inline';
+            }
+        });
+    }
 
     if (!fileInput) return;
 

@@ -9,3 +9,7 @@
 @section('content')
     <p>Selamat datang di Sistem Kost</p>
 @endsection
+
+@push('js')
+    @include('partials.submit-loading-guard')
+@endpush

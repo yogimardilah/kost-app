@@ -97,3 +97,7 @@
     </div>
 </div>
 @stop
+
+@push('js')
+    @include('partials.submit-loading-guard')
+@endpush

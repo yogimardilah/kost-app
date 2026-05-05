@@ -6,6 +6,10 @@
     <h1>Payroll</h1>
 @stop
 
+@push('js')
+    @include('partials.submit-loading-guard')
+@endpush
+
 @section('content')
     <!-- Summary Cards -->
     <div class="row mb-3">

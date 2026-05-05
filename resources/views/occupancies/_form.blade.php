@@ -103,7 +103,7 @@
         <label for="tanggal_keluar">Tanggal Keluar</label>
         <input type="date" name="tanggal_keluar" id="tanggal_keluar" class="form-control @error('tanggal_keluar') is-invalid @enderror" value="{{ old('tanggal_keluar', $occupancy->tanggal_keluar ?? '') }}" {{ $isExtending ? 'readonly' : '' }}>
         @error('tanggal_keluar') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
-        <small class="form-text text-muted">{{ $isExtending ? 'Tanggal keluar perpanjangan sampai tanggal 5 bulan depan (harga bulanan penuh).' : 'Tanggal keluar tidak boleh melewati tanggal 5 bulan berikutnya dari tanggal masuk.' }}</small>
+        <small class="form-text text-muted">{{ $isExtending ? 'Tanggal keluar perpanjangan sampai tanggal 5 bulan depan (harga bulanan penuh).' : 'Bulanan: maksimal sampai tanggal 5 periode berikutnya. Harian: boleh pilih tanggal keluar lewat tanggal 5.' }}</small>
     </div>
 
     <!-- Price Calculation Display -->
@@ -258,6 +258,11 @@
         // Validate checkout date doesn't exceed 5th of next applicable month
         function validateCheckoutDate() {
             if (!tanggalKeluar.value || !tanggalMasuk.value) return true;
+
+            // Daily rental is not capped by day-5 cycle.
+            if (tipeSewa.value !== 'bulanan') {
+                return true;
+            }
             
             const masuk = new Date(tanggalMasuk.value);
             const keluar = new Date(tanggalKeluar.value);

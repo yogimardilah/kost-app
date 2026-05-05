@@ -3,7 +3,7 @@
     $action = $consumer ? route('consumers.update', $consumer) : route('consumers.store');
 @endphp
 
-<form action="{{ $action }}" method="POST" enctype="multipart/form-data">
+<form action="{{ $action }}" method="POST" enctype="multipart/form-data" id="consumerForm">
     @csrf
     @if($consumer)
         @method('PUT')
@@ -146,9 +146,46 @@
     </script>
 
     <div class="form-group">
-        <button type="submit" class="btn btn-primary">
-            <i class="fas fa-save"></i> {{ $consumer ? 'Update' : 'Simpan' }}
+        <button type="submit" class="btn btn-primary" id="submitConsumerBtn">
+            <span class="submit-label-default">
+                <i class="fas fa-save"></i> {{ $consumer ? 'Update' : 'Simpan' }}
+            </span>
+            <span class="submit-label-loading" style="display: none;">
+                <i class="fas fa-spinner fa-spin"></i> Menyimpan...
+            </span>
         </button>
         <a href="{{ route('consumers.index') }}" class="btn btn-secondary">Batal</a>
     </div>
 </form>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('consumerForm');
+        const submitBtn = document.getElementById('submitConsumerBtn');
+
+        if (!form || !submitBtn) {
+            return;
+        }
+
+        let isSubmitting = false;
+
+        form.addEventListener('submit', function(event) {
+            if (isSubmitting) {
+                event.preventDefault();
+                return;
+            }
+
+            isSubmitting = true;
+            submitBtn.disabled = true;
+            submitBtn.classList.add('disabled');
+
+            const defaultLabel = submitBtn.querySelector('.submit-label-default');
+            const loadingLabel = submitBtn.querySelector('.submit-label-loading');
+
+            if (defaultLabel && loadingLabel) {
+                defaultLabel.style.display = 'none';
+                loadingLabel.style.display = 'inline';
+            }
+        });
+    });
+</script>

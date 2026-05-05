@@ -3,6 +3,8 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Models\Billing;
+use App\Models\Payment;
 
 class StorePaymentRequest extends FormRequest
 {
@@ -24,7 +26,36 @@ class StorePaymentRequest extends FormRequest
         return [
             'billing_id' => 'required|exists:billings,id',
             'tanggal_bayar' => 'required|date',
-            'jumlah' => 'required|numeric|min:0.01',
+            'jumlah' => [
+                'required',
+                'numeric',
+                'min:0.01',
+                function ($attribute, $value, $fail) {
+                    $billingId = $this->input('billing_id');
+                    if (!$billingId) {
+                        return;
+                    }
+
+                    $billing = Billing::find($billingId);
+                    if (!$billing) {
+                        return;
+                    }
+
+                    $totalTagihan = round((float) ($billing->total_tagihan ?? 0), 0);
+                    $totalPaid = round((float) Payment::where('billing_id', $billingId)->sum('jumlah'), 0);
+                    $remaining = max(0, $totalTagihan - $totalPaid);
+                    $requested = round((float) $value, 0);
+
+                    if ($remaining <= 0) {
+                        $fail('Tagihan ini sudah lunas dan tidak dapat menerima pembayaran baru.');
+                        return;
+                    }
+
+                    if ($requested > $remaining) {
+                        $fail('Jumlah pembayaran tidak boleh melebihi sisa tagihan (Rp ' . number_format($remaining, 0, ',', '.') . ').');
+                    }
+                },
+            ],
             'metode' => 'required|in:tunai,transfer,qris',
             'bukti_bayar' => 'nullable|string',
             'bukti_bayar_file' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',

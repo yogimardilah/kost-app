@@ -108,8 +108,15 @@ class PaymentController extends Controller
 
         $billings = Billing::where('status', '!=', 'lunas')
             ->with('consumer')
+            ->withSum('payments', 'jumlah')
             ->orderBy('id', 'desc')
             ->get();
+
+        $billings->each(function ($b) {
+            $totalTagihan = round((float) ($b->total_tagihan ?? 0), 0);
+            $paid = round((float) ($b->payments_sum_jumlah ?? 0), 0);
+            $b->remaining = max(0, $totalTagihan - $paid);
+        });
         return view('payments.create', compact('billings', 'billing', 'billingDetails', 'totalPaid', 'remaining', 'overpaid', 'computedStatus', 'detailAllocations'));
     }
 
@@ -131,6 +138,15 @@ class PaymentController extends Controller
 
         // Normalize to whole Rupiah
         $data['jumlah'] = round((float) $data['jumlah'], 0);
+
+        // Safety guard to prevent overpayment if billing changed between page load and submit.
+        if ($remaining <= 0) {
+            return back()->withErrors(['jumlah' => 'Tagihan ini sudah lunas, tidak bisa menerima pembayaran baru.'])->withInput();
+        }
+
+        if ($data['jumlah'] > $remaining) {
+            return back()->withErrors(['jumlah' => 'Jumlah pembayaran tidak boleh melebihi sisa tagihan (Rp ' . number_format($remaining, 0, ',', '.') . ').'])->withInput();
+        }
 
         // handle file upload (optional)
         $note = $data['bukti_bayar'] ?? null;

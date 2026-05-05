@@ -24,7 +24,7 @@ class StoreRoomOccupancyRequest extends FormRequest
                 'date',
                 'after_or_equal:tanggal_masuk',
                 function ($attribute, $value, $fail) {
-                    if ($value && $this->tanggal_masuk) {
+                    if (($this->tipe_sewa ?? null) === 'bulanan' && $value && $this->tanggal_masuk) {
                         $masuk = Carbon::parse($this->tanggal_masuk);
                         $keluar = Carbon::parse($value);
                         

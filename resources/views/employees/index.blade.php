@@ -6,6 +6,10 @@
     <h1>Data Karyawan</h1>
 @stop
 
+@push('js')
+    @include('partials.submit-loading-guard')
+@endpush
+
 @section('content')
     <div class="card">
         <div class="card-header">
